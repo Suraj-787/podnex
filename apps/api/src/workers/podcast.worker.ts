@@ -158,7 +158,7 @@ export const podcastWorker = new Worker<PodcastJobData>(
     processPodcastJob,
     {
         connection: connectionConfig,
-        concurrency: 5, // Process 5 jobs simultaneously
+        concurrency: 2, // Process 2 jobs simultaneously to avoid connection pool exhaustion
         removeOnComplete: { count: 100 },
         removeOnFail: { count: 500 },
     }

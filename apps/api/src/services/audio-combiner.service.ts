@@ -1,7 +1,11 @@
-import ffmpeg from "fluent-ffmpeg";
+import { createRequire } from "module";
 import { promises as fs } from "fs";
 import path from "path";
 import os from "os";
+
+const require = createRequire(import.meta.url);
+// eslint-disable-next-line @typescript-eslint/no-var-requires
+const ffmpeg = require("fluent-ffmpeg");
 
 interface AudioSegment {
     buffer: Buffer;
@@ -87,7 +91,7 @@ export class AudioCombinerService {
                 .audioBitrate('128k')
                 .output(outputPath)
                 .on('end', () => resolve())
-                .on('error', (err) => reject(err))
+                .on('error', (err: any) => reject(err))
                 .run();
         });
     }
@@ -120,7 +124,7 @@ export class AudioCombinerService {
                 .audioFrequency(44100)
                 .output(outputPath)
                 .on("end", () => resolve())
-                .on("error", (err) => reject(err))
+                .on("error", (err: any) => reject(err))
                 .run();
         });
     }

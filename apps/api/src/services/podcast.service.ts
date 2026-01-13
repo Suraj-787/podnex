@@ -52,12 +52,18 @@ export class PodcastService {
 
         const { jobId } = await QueueService.addPodcastJob(jobData);
 
-        // Create job tracking record
-        await prisma.podcastJob.create({
-            data: {
+        // Create or update job tracking record (upsert to handle duplicates)
+        await prisma.podcastJob.upsert({
+            where: { jobId },
+            create: {
                 jobId,
                 podcastId: podcast.id,
                 status: "QUEUED",
+            },
+            update: {
+                status: "QUEUED",
+                error: null,
+                stackTrace: null,
             },
         });
 
@@ -68,6 +74,8 @@ export class PodcastService {
     }
 
     static async findById(podcastId: string, userId: string) {
+        console.log(`🔍 Finding podcast: ${podcastId} for user: ${userId}`);
+
         const podcast = await prisma.podcast.findFirst({
             where: {
                 id: podcastId,
@@ -83,9 +91,23 @@ export class PodcastService {
         });
 
         if (!podcast) {
+            console.log(`❌ Podcast not found: ${podcastId} for user: ${userId}`);
+
+            // Debug: Check if podcast exists without userId filter
+            const anyPodcast = await prisma.podcast.findUnique({
+                where: { id: podcastId },
+            });
+
+            if (anyPodcast) {
+                console.log(`⚠️  Podcast exists but belongs to different user: ${anyPodcast.userId}`);
+            } else {
+                console.log(`⚠️  Podcast does not exist in database at all`);
+            }
+
             throw new AppError(404, "Podcast not found");
         }
 
+        console.log(`✅ Found podcast: ${podcast.id}, status: ${podcast.status}`);
         return podcast;
     }
 
@@ -224,11 +246,17 @@ export class PodcastService {
 
         const { jobId } = await QueueService.addPodcastJob(jobData);
 
-        await prisma.podcastJob.create({
-            data: {
+        await prisma.podcastJob.upsert({
+            where: { jobId },
+            create: {
                 jobId,
                 podcastId: podcast.id,
                 status: "QUEUED",
+            },
+            update: {
+                status: "QUEUED",
+                error: null,
+                stackTrace: null,
             },
         });
 

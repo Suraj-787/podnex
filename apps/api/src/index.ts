@@ -8,9 +8,25 @@ import { errorHandler, notFound } from "./middleware/index.js";
 import userRoutes from "./routes/user.routes.js";
 import podcastRoutes from "./routes/podcast.routes.js";
 import dotenv from "dotenv";
-import "./workers/podcast.worker.js"; // Start worker
+import { fileURLToPath } from "url";
+import { dirname, join } from "path";
 
-dotenv.config();
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+
+// Load .env from apps/api directory FIRST
+dotenv.config({ path: join(__dirname, "../.env") });
+
+// Debug: Log environment variable loading
+console.log("🔧 Environment variables loaded:");
+console.log(`   AWS_ACCESS_KEY_ID: ${process.env.AWS_ACCESS_KEY_ID ? '✅ Set' : '❌ Missing'}`);
+console.log(`   AWS_SECRET_ACCESS_KEY: ${process.env.AWS_SECRET_ACCESS_KEY ? '✅ Set' : '❌ Missing'}`);
+console.log(`   AWS_REGION: ${process.env.AWS_REGION || 'us-east-1 (default)'}`);
+console.log(`   S3_BUCKET_NAME: ${process.env.S3_BUCKET_NAME || 'podnext-audio-storage (default)'}`);
+console.log(`   DATABASE_URL: ${process.env.DATABASE_URL ? '✅ Set' : '❌ Missing'}\n`);
+
+// Import worker AFTER env vars are loaded
+import "./workers/podcast.worker.js";
 
 const app = express();
 const PORT = process.env.PORT || 3001;

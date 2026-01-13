@@ -8,20 +8,45 @@ import {
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import { nanoid } from "nanoid";
 
-const s3Client = new S3Client({
-    region: process.env.AWS_REGION || "us-east-1",
-    credentials: {
-        accessKeyId: process.env.AWS_ACCESS_KEY_ID!,
-        secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY!,
-    },
-    // Optional: For Cloudflare R2 or other S3-compatible services
-    ...(process.env.S3_ENDPOINT && {
-        endpoint: process.env.S3_ENDPOINT,
-        forcePathStyle: true,
-    }),
-});
+let s3Client: S3Client | null = null;
+let BUCKET_NAME: string;
 
-const BUCKET_NAME = process.env.S3_BUCKET_NAME || "podnex-audio";
+/**
+ * Get or create S3 client (lazy initialization to ensure env vars are loaded)
+ */
+function getS3Client(): S3Client {
+    if (!s3Client) {
+        // Debug: Log S3 configuration
+        console.log("🔧 Initializing S3 Client:");
+        console.log(`   AWS_ACCESS_KEY_ID: ${process.env.AWS_ACCESS_KEY_ID ? process.env.AWS_ACCESS_KEY_ID.substring(0, 8) + '...' : '❌ MISSING'}`);
+        console.log(`   AWS_SECRET_ACCESS_KEY: ${process.env.AWS_SECRET_ACCESS_KEY ? '✅ Set (' + process.env.AWS_SECRET_ACCESS_KEY.length + ' chars)' : '❌ MISSING'}`);
+        console.log(`   AWS_REGION: ${process.env.AWS_REGION || 'us-east-1 (default)'}`);
+
+        s3Client = new S3Client({
+            region: process.env.AWS_REGION || "us-east-1",
+            credentials: {
+                accessKeyId: process.env.AWS_ACCESS_KEY_ID!,
+                secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY!,
+            },
+            // Optional: For Cloudflare R2 or other S3-compatible services
+            ...(process.env.S3_ENDPOINT && {
+                endpoint: process.env.S3_ENDPOINT,
+                forcePathStyle: true,
+            }),
+        });
+
+        BUCKET_NAME = process.env.S3_BUCKET_NAME || "podnext-audio-storage";
+        console.log(`   S3_BUCKET_NAME: ${BUCKET_NAME}\n`);
+    }
+    return s3Client;
+}
+
+function getBucketName(): string {
+    if (!BUCKET_NAME) {
+        BUCKET_NAME = process.env.S3_BUCKET_NAME || "podnext-audio-storage";
+    }
+    return BUCKET_NAME;
+}
 
 export class StorageService {
     static async uploadAudio(
@@ -29,71 +54,119 @@ export class StorageService {
         podcastId: string,
         metadata?: Record<string, string>
     ): Promise<string> {
+        console.log(`📤 Uploading audio to S3 for podcast: ${podcastId}`);
+        console.log(`   Buffer size: ${buffer.length} bytes`);
+        console.log(`   Bucket: ${getBucketName()}`);
+
         const key = `podcasts/${podcastId}/${nanoid()}.mp3`;
+        console.log(`   Key: ${key}`);
 
-        const command = new PutObjectCommand({
-            Bucket: BUCKET_NAME,
-            Key: key,
-            Body: buffer,
-            ContentType: "audio/mpeg",
-            Metadata: metadata,
-        });
+        try {
+            const command = new PutObjectCommand({
+                Bucket: getBucketName(),
+                Key: key,
+                Body: buffer,
+                ContentType: "audio/mpeg",
+                Metadata: metadata,
+            });
 
-        await s3Client.send(command);
+            await getS3Client().send(command);
+            console.log(`✅ S3 upload successful`);
 
-        // Return public URL or CDN URL
-        const cdnUrl = process.env.S3_CDN_URL;
-        if (cdnUrl) {
-            return `${cdnUrl}/${key}`;
+            // Return public URL or CDN URL
+            const cdnUrl = process.env.S3_CDN_URL;
+            if (cdnUrl) {
+                return `${cdnUrl}/${key}`;
+            }
+
+            // Return S3 URL
+            if (process.env.S3_ENDPOINT) {
+                // For R2 or custom endpoint
+                return `${process.env.S3_ENDPOINT}/${getBucketName()}/${key}`;
+            }
+
+            return `https://${getBucketName()}.s3.${process.env.AWS_REGION}.amazonaws.com/${key}`;
+        } catch (error: any) {
+            console.error(`❌ S3 upload failed:`, error.message);
+            console.error(`   Error name: ${error.name}`);
+            console.error(`   Error code: ${error.code || 'N/A'}`);
+            throw error;
         }
+    }
 
-        // Return S3 URL
-        if (process.env.S3_ENDPOINT) {
-            // For R2 or custom endpoint
-            return `${process.env.S3_ENDPOINT}/${BUCKET_NAME}/${key}`;
-        }
-
-        return `https://${BUCKET_NAME}.s3.${process.env.AWS_REGION}.amazonaws.com/${key}`;
+    /**
+     * Check if a URL is an S3 URL or a local path
+     */
+    private static isS3Url(url: string): boolean {
+        return url.startsWith('http://') || url.startsWith('https://');
     }
 
     static async getSignedDownloadUrl(
         audioUrl: string,
         expiresIn: number = 3600
     ): Promise<string> {
+        // If it's a local path, return as-is
+        if (!this.isS3Url(audioUrl)) {
+            return audioUrl;
+        }
+
         // Extract key from URL
         const url = new URL(audioUrl);
         const key = url.pathname.substring(1); // Remove leading slash
 
         const command = new GetObjectCommand({
-            Bucket: BUCKET_NAME,
+            Bucket: getBucketName(),
             Key: key,
         });
 
-        return await getSignedUrl(s3Client, command, { expiresIn });
+        return await getSignedUrl(getS3Client(), command, { expiresIn });
     }
 
     static async deleteAudio(audioUrl: string): Promise<void> {
+        // If it's a local path, delete from filesystem
+        if (!this.isS3Url(audioUrl)) {
+            const fs = await import('fs/promises');
+            const path = await import('path');
+            const localPath = path.join(process.cwd(), 'public', audioUrl);
+            await fs.unlink(localPath);
+            return;
+        }
+
         const url = new URL(audioUrl);
         const key = url.pathname.substring(1);
 
         const command = new DeleteObjectCommand({
-            Bucket: BUCKET_NAME,
+            Bucket: getBucketName(),
             Key: key,
         });
 
-        await s3Client.send(command);
+        await getS3Client().send(command);
     }
 
     static async getMetadata(audioUrl: string) {
+        // If it's a local path, get file stats
+        if (!this.isS3Url(audioUrl)) {
+            const fs = await import('fs/promises');
+            const path = await import('path');
+            const localPath = path.join(process.cwd(), 'public', audioUrl);
+            const stats = await fs.stat(localPath);
+            return {
+                size: stats.size,
+                contentType: 'audio/mpeg',
+                lastModified: stats.mtime,
+                metadata: {},
+            };
+        }
+
         const url = new URL(audioUrl);
         const key = url.pathname.substring(1);
 
         const command = new HeadObjectCommand({
-            Bucket: BUCKET_NAME,
+            Bucket: getBucketName(),
             Key: key,
         });
 
-        const response = await s3Client.send(command);
+        const response = await getS3Client().send(command);
         return {
             size: response.ContentLength,
             contentType: response.ContentType,
