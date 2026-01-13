@@ -1,6 +1,7 @@
 import type { Request, Response, NextFunction } from "express";
 import { auth } from "../lib/auth.js";
-import { AppError } from "./error.middleware.js";
+import { prisma } from "@repo/database";
+import crypto from "crypto";
 
 export interface AuthRequest extends Request {
   user?: {
@@ -10,16 +11,19 @@ export interface AuthRequest extends Request {
   };
 }
 
-export async function requireAuth(
+export const requireAuth = async (
   req: AuthRequest,
   res: Response,
   next: NextFunction
-) {
+) => {
   try {
     const session = await auth.api.getSession({ headers: req.headers });
-    
+
     if (!session?.user) {
-      throw new AppError(401, "Unauthorized - Please sign in");
+      return res.status(401).json({
+        success: false,
+        error: "Invalid or expired session",
+      });
     }
 
     req.user = {
@@ -30,18 +34,21 @@ export async function requireAuth(
 
     next();
   } catch (error) {
-    next(new AppError(401, "Invalid or expired session"));
+    return res.status(401).json({
+      success: false,
+      error: "Authentication required",
+    });
   }
-}
+};
 
-export async function optionalAuth(
+export const optionalAuth = async (
   req: AuthRequest,
   res: Response,
   next: NextFunction
-) {
+) => {
   try {
     const session = await auth.api.getSession({ headers: req.headers });
-    
+
     if (session?.user) {
       req.user = {
         id: session.user.id,
@@ -49,9 +56,99 @@ export async function optionalAuth(
         name: session.user.name,
       };
     }
+
+    next();
   } catch (error) {
-    // Ignore errors, auth is optional
+    next();
   }
-  
+};
+
+export const requireApiKey = async (
+  req: AuthRequest,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    const apiKey = req.headers["x-api-key"] as string;
+
+    if (!apiKey) {
+      return res.status(401).json({
+        success: false,
+        error: "API key required",
+      });
+    }
+
+    // Hash the API key to compare with stored hash
+    const hashedKey = crypto.createHash("sha256").update(apiKey).digest("hex");
+
+    // Find API key in database (using 'key' field which stores the hash)
+    const apiKeyRecord = await prisma.apiKey.findFirst({
+      where: {
+        key: hashedKey,
+        // Note: isActive field doesn't exist in schema, so we check expiresAt only
+        OR: [
+          { expiresAt: null },
+          { expiresAt: { gt: new Date() } }
+        ]
+      },
+      include: {
+        user: true,
+      },
+    });
+
+    if (!apiKeyRecord) {
+      return res.status(401).json({
+        success: false,
+        error: "Invalid or expired API key",
+      });
+    }
+
+    // Update last used timestamp
+    await prisma.apiKey.update({
+      where: { id: apiKeyRecord.id },
+      data: {
+        lastUsedAt: new Date(),
+      },
+    });
+
+    // Set user from API key
+    req.user = {
+      id: apiKeyRecord.user.id,
+      email: apiKeyRecord.user.email,
+      name: apiKeyRecord.user.name,
+    };
+
+    next();
+  } catch (error) {
+    return res.status(401).json({
+      success: false,
+      error: "API key authentication failed",
+    });
+  }
+};
+
+export const requireAdmin = async (
+  req: AuthRequest,
+  res: Response,
+  next: NextFunction
+) => {
+  if (!req.user) {
+    return res.status(401).json({
+      success: false,
+      error: "Authentication required",
+    });
+  }
+
+  // Check if user email is admin (simple check for now)
+  // TODO: Add role field to User model for proper role-based access
+  const adminEmails = (process.env.ADMIN_EMAILS || "").split(",");
+
+  if (!adminEmails.includes(req.user.email)) {
+    return res.status(403).json({
+      success: false,
+      error: "Admin access required",
+    });
+  }
+
   next();
-}
+};

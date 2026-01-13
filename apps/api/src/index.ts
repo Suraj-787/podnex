@@ -6,7 +6,9 @@ import { toNodeHandler } from "better-auth/node";
 import { auth } from "./lib/auth.js";
 import { errorHandler, notFound } from "./middleware/index.js";
 import userRoutes from "./routes/user.routes.js";
+import podcastRoutes from "./routes/podcast.routes.js";
 import dotenv from "dotenv";
+import "./workers/podcast.worker.js"; // Start worker
 
 dotenv.config();
 
@@ -42,6 +44,7 @@ app.get("/api/health", (req, res) => {
 });
 
 app.use("/api/v1/user", userRoutes);
+app.use("/api/v1/podcasts", podcastRoutes);
 
 // Error handlers (must be last)
 app.use(notFound);

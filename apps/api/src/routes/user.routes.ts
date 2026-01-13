@@ -72,4 +72,63 @@ router.get("/usage", requireAuth, async (req: AuthRequest, res, next) => {
   }
 });
 
+// Delete account
+router.delete("/account", requireAuth, async (req: AuthRequest, res, next) => {
+  try {
+    const userId = req.user!.id;
+
+    // Soft delete user and cleanup related data
+    await prisma.$transaction(async (tx) => {
+      // Cancel any active subscriptions
+      await tx.subscription.updateMany({
+        where: { userId },
+        data: {
+          status: "CANCELED",
+          canceledAt: new Date(), // Note: canceledAt not cancelledAt
+        },
+      });
+
+      // Soft delete podcasts
+      await tx.podcast.updateMany({
+        where: { userId },
+        data: { deletedAt: new Date() },
+      });
+
+      // Note: ApiKey doesn't have isActive field, so we just update expiresAt
+      await tx.apiKey.updateMany({
+        where: { userId },
+        data: { expiresAt: new Date() }, // Expire all keys
+      });
+
+      // Deactivate webhooks (using 'active' field)
+      await tx.webhook.updateMany({
+        where: { userId },
+        data: { active: false },
+      });
+
+      // Mark user as deleted (soft delete)
+      await tx.user.update({
+        where: { id: userId },
+        data: {
+          email: `deleted_${userId}@deleted.com`,
+          name: "Deleted User",
+          emailVerified: false,
+        },
+      });
+
+      // Delete sessions
+      await tx.session.deleteMany({
+        where: { userId },
+      });
+    });
+
+    res.json({
+      success: true,
+      message: "Account deleted successfully"
+    });
+  } catch (error) {
+    next(error);
+  }
+});
+
 export default router;

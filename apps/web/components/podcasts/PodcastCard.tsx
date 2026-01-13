@@ -75,20 +75,20 @@ export function PodcastCard({
   onRetry,
   onViewDetails,
 }: PodcastCardProps) {
-  const statusConfig = STATUS_CONFIG[podcast.status as keyof typeof STATUS_CONFIG];
+  const statusConfig = STATUS_CONFIG[podcast.status as keyof typeof STATUS_CONFIG] || STATUS_CONFIG.QUEUED;
   const StatusIcon = statusConfig.icon;
   const isPlayable = podcast.status === "COMPLETED" && podcast.audioUrl;
 
   // List View - Three-Zone Fixed Layout
   if (viewMode === "list") {
     return (
-      <div 
+      <div
         className="group flex items-stretch rounded-xl border border-border bg-card hover:border-border/60 transition-colors overflow-hidden shadow-sm hover:shadow-md cursor-pointer"
         style={{ minHeight: "88px" }}
         onClick={() => onViewDetails?.(podcast)}
       >
         {/* LEFT ZONE: Status/Play Icon - Fixed Width */}
-        <div 
+        <div
           className="flex items-center justify-center bg-muted/30 border-r border-border/50 flex-shrink-0"
           style={{ width: "88px" }}
           onClick={(e) => e.stopPropagation()}
@@ -125,7 +125,7 @@ export function PodcastCard({
           <h3 className="font-semibold text-base text-foreground leading-tight truncate">
             {podcast.title || "Untitled Podcast"}
           </h3>
-          
+
           {/* Metadata Row - Single Line */}
           <div className="flex items-center gap-3 text-xs">
             {/* STATUS BADGE: State indicator (Completed/Processing/Failed/Queued) */}
@@ -140,7 +140,7 @@ export function PodcastCard({
               )} />
               <span className="whitespace-nowrap">{statusConfig.label}</span>
             </div>
-            
+
             {/* Retry Button - Beside Failed Badge */}
             {podcast.status === "FAILED" && (
               <Button
@@ -157,7 +157,7 @@ export function PodcastCard({
                 Retry
               </Button>
             )}
-            
+
             {/* Duration - Only for Completed */}
             {podcast.audioDuration && podcast.status === "COMPLETED" && (
               <div className="inline-flex items-center gap-1 text-muted-foreground/90">
@@ -183,7 +183,7 @@ export function PodcastCard({
         </div>
 
         {/* RIGHT ZONE: Time & Actions - Fixed Width */}
-        <div 
+        <div
           className="flex items-center gap-3 px-4 border-l border-border/50 bg-muted/20 flex-shrink-0"
           style={{ width: "200px" }}
           onClick={(e) => e.stopPropagation()}
@@ -200,9 +200,9 @@ export function PodcastCard({
             {/* Overflow Menu - Always Visible */}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button 
-                  variant="ghost" 
-                  size="icon" 
+                <Button
+                  variant="ghost"
+                  size="icon"
                   className="h-8 w-8 text-muted-foreground hover:text-foreground hover:bg-muted/50"
                   aria-label={`More options for ${podcast.title || "podcast"}`}
                   onClick={(e) => e.stopPropagation()}
@@ -317,7 +317,7 @@ export function PodcastCard({
             Generation failed. Please try again.
           </div>
         )}
-        
+
         {/* Metadata - Pushed to Bottom */}
         <div className="flex items-center gap-2 text-xs text-muted-foreground/90 mt-auto">
           <Clock className="h-3.5 w-3.5 flex-shrink-0" />
@@ -361,9 +361,9 @@ export function PodcastCard({
           {/* Right: More Menu - Always Visible */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button 
-                variant="ghost" 
-                size="icon" 
+              <Button
+                variant="ghost"
+                size="icon"
                 className="h-8 w-8 text-muted-foreground hover:text-foreground hover:bg-muted/50 ml-auto"
                 aria-label={`More options for ${podcast.title || "podcast"}`}
               >

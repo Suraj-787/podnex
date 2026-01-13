@@ -65,7 +65,7 @@ const createPodcastSchema = z.object({
     .string()
     .min(100, "Content must be at least 100 characters")
     .max(10000, "Content too long (max 10,000 characters)"),
-  duration: z.enum(["short", "medium", "long"], {
+  duration: z.enum(["SHORT", "LONG"], {
     required_error: "Please select a duration",
   }),
   title: z.string().max(100, "Title too long (max 100 characters)").optional(),
@@ -91,7 +91,7 @@ export default function NewPodcastPage() {
     resolver: zodResolver(createPodcastSchema),
     defaultValues: {
       noteContent: "",
-      duration: "short",
+      duration: "SHORT",
       title: "",
       hostVoice: "default",
       guestVoice: "default",
@@ -144,11 +144,32 @@ export default function NewPodcastPage() {
     setIsSubmitting(true);
     try {
       console.log("Creating podcast with data:", data);
-      await new Promise((resolve) => setTimeout(resolve, 2000));
-      toast.success("Podcast created successfully!");
+
+      const response = await fetch('/api/podcasts', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(data),
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || error.message || 'Failed to create podcast');
+      }
+
+      const result = await response.json();
+      console.log("Podcast created:", result);
+
+      toast.success("Podcast created successfully!", {
+        description: "Your podcast is being generated. This may take a few minutes.",
+      });
       router.push("/dashboard/podcasts");
     } catch (error) {
-      toast.error("Failed to create podcast");
+      console.error("Error creating podcast:", error);
+      toast.error("Failed to create podcast", {
+        description: error instanceof Error ? error.message : "Please try again.",
+      });
     } finally {
       setIsSubmitting(false);
     }
@@ -208,9 +229,9 @@ export default function NewPodcastPage() {
                       "flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-medium transition-all",
                       step === s.id && "bg-foreground text-background",
                       step > s.id &&
-                        "bg-emerald-500/10 text-emerald-600 hover:bg-emerald-500/20 cursor-pointer",
+                      "bg-emerald-500/10 text-emerald-600 hover:bg-emerald-500/20 cursor-pointer",
                       step < s.id &&
-                        "bg-muted text-muted-foreground cursor-not-allowed"
+                      "bg-muted text-muted-foreground cursor-not-allowed"
                     )}
                   >
                     <div
@@ -219,7 +240,7 @@ export default function NewPodcastPage() {
                         step === s.id && "bg-background text-foreground",
                         step > s.id && "bg-emerald-500 text-white",
                         step < s.id &&
-                          "bg-muted-foreground/20 text-muted-foreground"
+                        "bg-muted-foreground/20 text-muted-foreground"
                       )}
                     >
                       {step > s.id ? (
@@ -328,8 +349,8 @@ Tips for best results:
                           <span
                             className={cn(
                               characterCount >= 100 &&
-                                characterCount <= 10000 &&
-                                "text-emerald-500",
+                              characterCount <= 10000 &&
+                              "text-emerald-500",
                               characterCount > 10000 && "text-red-500"
                             )}
                           >
@@ -380,18 +401,18 @@ Tips for best results:
                           name="duration"
                           render={({ field }) => (
                             <FormItem>
-                              <div className="grid grid-cols-3 gap-3">
+                              <div className="grid grid-cols-2 gap-3">
                                 <button
                                   type="button"
-                                  onClick={() => field.onChange("short")}
+                                  onClick={() => field.onChange("SHORT")}
                                   className={cn(
                                     "relative p-4 rounded-lg border-2 text-center transition-all",
-                                    field.value === "short"
+                                    field.value === "SHORT"
                                       ? "border-foreground bg-foreground/5"
                                       : "border-border bg-background hover:border-foreground/30"
                                   )}
                                 >
-                                  {field.value === "short" && (
+                                  {field.value === "SHORT" && (
                                     <Check className="absolute top-3 right-3 h-4 w-4 text-foreground" />
                                   )}
                                   <p className="font-semibold">Short · 3-5 min</p>
@@ -402,36 +423,15 @@ Tips for best results:
 
                                 <button
                                   type="button"
-                                  onClick={() => field.onChange("medium")}
+                                  onClick={() => field.onChange("LONG")}
                                   className={cn(
                                     "relative p-4 rounded-lg border-2 text-center transition-all",
-                                    field.value === "medium"
+                                    field.value === "LONG"
                                       ? "border-foreground bg-foreground/5"
                                       : "border-border bg-background hover:border-foreground/30"
                                   )}
                                 >
-                                  {field.value === "medium" && (
-                                    <Check className="absolute top-3 right-3 h-4 w-4 text-foreground" />
-                                  )}
-                                  <p className="font-semibold">
-                                    Medium · 5-8 min
-                                  </p>
-                                  <p className="text-xs text-muted-foreground mt-1">
-                                    Balanced discussion
-                                  </p>
-                                </button>
-
-                                <button
-                                  type="button"
-                                  onClick={() => field.onChange("long")}
-                                  className={cn(
-                                    "relative p-4 rounded-lg border-2 text-center transition-all",
-                                    field.value === "long"
-                                      ? "border-foreground bg-foreground/5"
-                                      : "border-border bg-background hover:border-foreground/30"
-                                  )}
-                                >
-                                  {field.value === "long" && (
+                                  {field.value === "LONG" && (
                                     <Check className="absolute top-3 right-3 h-4 w-4 text-foreground" />
                                   )}
                                   <p className="font-semibold">Long · 8-10 min</p>
@@ -731,18 +731,10 @@ Tips for best results:
                             Duration
                           </p>
                           <p className="text-lg font-semibold">
-                            {duration === "short"
-                              ? "Short"
-                              : duration === "medium"
-                                ? "Medium"
-                                : "Long"}
+                            {duration === "SHORT" ? "Short" : "Long"}
                           </p>
                           <p className="text-sm text-muted-foreground">
-                            {duration === "short"
-                              ? "3-5 min"
-                              : duration === "medium"
-                                ? "5-8 min"
-                                : "8-10 min"}
+                            {duration === "SHORT" ? "3-5 min" : "8-10 min"}
                           </p>
                         </div>
 

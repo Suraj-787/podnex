@@ -11,12 +11,17 @@ node_modules
 .env.development.local
 .env.test.local
 .env.production.local
+*.env
+!.env.example
 
 # Testing
 coverage
+*.lcov
+.nyc_output
 
 # Turbo
 .turbo
+*.turbo.json
 
 # Vercel
 .vercel
@@ -26,16 +31,52 @@ coverage
 out/
 build
 dist
+*.tsbuildinfo
 
 # Debug
 npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
 
 # Misc
 .DS_Store
 *.pem
+*.log
+
+# IDEs
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+.idea
+*.swp
+*.swo
+*~
+
+# OS
+Thumbs.db
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+
+# Audio files (generated podcasts)
+apps/api/public/podcasts/*.mp3
+apps/api/public/podcasts/*.wav
 
 # Bun (not used - pnpm only)
 bun.lockb
 
-# shell file
+# Shell scripts (if they contain secrets)
 dev.sh
+
+# Prisma
+prisma/migrations/*_migration.sql
+!prisma/migrations/migration_lock.toml
+
+# Redis dump
+dump.rdb

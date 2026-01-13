@@ -18,10 +18,10 @@ import {
   PodcastFilters as Filters,
   ViewMode,
 } from "@/lib/types/podcast.types";
-import { 
-  Search, 
-  Plus, 
-  LayoutGrid, 
+import {
+  Search,
+  Plus,
+  LayoutGrid,
   List,
   Mic,
   SlidersHorizontal,
@@ -47,13 +47,14 @@ export default function PodcastsPage() {
       try {
         setIsLoading(true);
         const response = await fetch('/api/podcasts');
-        
+
         if (!response.ok) {
           throw new Error('Failed to fetch podcasts');
         }
-        
-        const data = await response.json();
-        setAllPodcasts(data);
+
+        const result = await response.json();
+        // Backend returns { success: true, data: [...], pagination: {...} }
+        setAllPodcasts(result.data || []);
       } catch (error) {
         console.error('Error fetching podcasts:', error);
         // Don't show toast on initial load - empty state will show
@@ -119,19 +120,19 @@ export default function PodcastsPage() {
     if (!confirm('Are you sure you want to delete this podcast?')) {
       return;
     }
-    
+
     try {
       const response = await fetch(`/api/podcasts/${podcast.id}`, {
         method: 'DELETE',
       });
-      
+
       if (!response.ok) {
         throw new Error('Failed to delete podcast');
       }
-      
+
       // Remove from local state
       setAllPodcasts(allPodcasts.filter(p => p.id !== podcast.id));
-      
+
       toast.success('Podcast deleted', {
         description: 'Your podcast has been successfully deleted.',
       });
@@ -148,18 +149,18 @@ export default function PodcastsPage() {
       const response = await fetch(`/api/podcasts/${podcast.id}/retry`, {
         method: 'POST',
       });
-      
+
       if (!response.ok) {
         throw new Error('Failed to retry podcast generation');
       }
-      
+
       const updatedPodcast = await response.json();
-      
+
       // Update local state
-      setAllPodcasts(allPodcasts.map(p => 
+      setAllPodcasts(allPodcasts.map(p =>
         p.id === podcast.id ? updatedPodcast : p
       ));
-      
+
       toast.success('Podcast queued for regeneration', {
         description: 'Your podcast will be processed shortly.',
       });
@@ -278,8 +279,8 @@ export default function PodcastsPage() {
                   onClick={() => setViewMode("grid")}
                   className={cn(
                     "p-1.5 rounded-md transition-colors",
-                    viewMode === "grid" 
-                      ? "bg-foreground text-background" 
+                    viewMode === "grid"
+                      ? "bg-foreground text-background"
                       : "text-muted-foreground hover:text-foreground"
                   )}
                 >
@@ -289,8 +290,8 @@ export default function PodcastsPage() {
                   onClick={() => setViewMode("list")}
                   className={cn(
                     "p-1.5 rounded-md transition-colors",
-                    viewMode === "list" 
-                      ? "bg-foreground text-background" 
+                    viewMode === "list"
+                      ? "bg-foreground text-background"
                       : "text-muted-foreground hover:text-foreground"
                   )}
                 >
