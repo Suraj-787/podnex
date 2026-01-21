@@ -17,6 +17,57 @@ export const requireAuth = async (
   next: NextFunction
 ) => {
   try {
+    // Check for API key in Authorization header first
+    const authHeader = req.headers.authorization;
+
+    if (authHeader && authHeader.startsWith("Bearer ")) {
+      const apiKey = authHeader.substring(7); // Remove "Bearer " prefix
+
+      // Check if it's an API key (starts with pk_live_ or pk_test_)
+      if (apiKey.startsWith("pk_live_") || apiKey.startsWith("pk_test_")) {
+        // Hash the API key to compare with stored hash
+        const hashedKey = crypto.createHash("sha256").update(apiKey).digest("hex");
+
+        // Find API key in database
+        const apiKeyRecord = await prisma.apiKey.findFirst({
+          where: {
+            key: hashedKey,
+            OR: [
+              { expiresAt: null },
+              { expiresAt: { gt: new Date() } }
+            ]
+          },
+          include: {
+            user: true,
+          },
+        });
+
+        if (apiKeyRecord) {
+          // Update last used timestamp (async, don't wait)
+          prisma.apiKey.update({
+            where: { id: apiKeyRecord.id },
+            data: { lastUsedAt: new Date() },
+          }).catch(() => { }); // Ignore errors
+
+          // Set user from API key
+          req.user = {
+            id: apiKeyRecord.user.id,
+            email: apiKeyRecord.user.email,
+            name: apiKeyRecord.user.name,
+          };
+
+          return next();
+        }
+
+        // Invalid API key
+        return res.status(401).json({
+          success: false,
+          error: "Invalid or expired API key",
+        });
+      }
+    }
+
+    // Fall back to session-based authentication
     const session = await auth.api.getSession({ headers: req.headers });
 
     if (!session?.user) {

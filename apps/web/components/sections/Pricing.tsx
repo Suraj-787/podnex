@@ -6,49 +6,49 @@ import { Check } from "lucide-react";
 
 const plans = [
   {
-    name: "Creator",
-    price: "49",
-    description: "For independent podcasters and content creators.",
+    name: "Free",
+    price: "0",
+    description: "Perfect for trying out PodNex.",
     features: [
-      "10 hours of generation / month",
-      "5 voice clones",
-      "Standard mastering",
-      "MP3 & WAV export",
+      "5 podcasts per month",
+      "Up to 5 minutes per podcast",
+      "Basic voices",
+      "Standard quality",
       "Email support",
     ],
-    cta: "Start Free Trial",
+    cta: "Get Started",
     popular: false,
   },
   {
-    name: "Studio",
-    price: "199",
-    description: "For production teams and growing networks.",
+    name: "Starter",
+    price: "9",
+    description: "For regular content creators.",
     features: [
-      "50 hours of generation / month",
-      "25 voice clones",
-      "Advanced mastering suite",
-      "All export formats",
-      "API access",
-      "Priority support",
-      "Custom voice training",
+      "25 podcasts per month",
+      "Up to 10 minutes per podcast",
+      "Premium voices",
+      "High quality audio",
+      "Priority processing",
+      "Email support",
     ],
     cta: "Start Free Trial",
     popular: true,
   },
   {
-    name: "Enterprise",
-    price: "Custom",
-    description: "For large-scale production and distribution.",
+    name: "Pro",
+    price: "29",
+    description: "For professional creators and businesses.",
     features: [
-      "Unlimited generation",
-      "Unlimited voice clones",
-      "White-label solution",
-      "Dedicated infrastructure",
-      "Custom integrations",
-      "24/7 support",
-      "SLA guarantee",
+      "100 podcasts per month",
+      "Up to 15 minutes per podcast",
+      "All premium voices",
+      "Highest quality audio",
+      "Priority processing",
+      "API access",
+      "Webhook support",
+      "Priority support",
     ],
-    cta: "Contact Sales",
+    cta: "Start Free Trial",
     popular: false,
   },
 ];
@@ -69,12 +69,12 @@ const Pricing = () => {
             Pricing
           </span>
           <h2 className="font-serif text-4xl md:text-5xl font-medium leading-tight mb-6">
-            Investment in
+            Simple, transparent
             <br />
-            <span className="italic text-slate-light">excellence.</span>
+            <span className="italic text-slate-light">pricing.</span>
           </h2>
           <p className="text-lg font-light text-muted-foreground leading-relaxed">
-            Transparent pricing for every stage of growth. Start free, scale without limits.
+            Start free and scale as you grow. No hidden fees, cancel anytime.
           </p>
         </motion.div>
 
@@ -87,11 +87,10 @@ const Pricing = () => {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ duration: 0.6, delay: index * 0.1 }}
-              className={`relative p-8 lg:p-10 rounded-lg ${
-                plan.popular 
-                  ? "border-2 border-slate-light/30 bg-surface" 
+              className={`relative p-8 lg:p-10 rounded-lg ${plan.popular
+                  ? "border-2 border-slate-light/30 bg-surface"
                   : "border border-border/30 bg-background"
-              }`}
+                }`}
             >
               {plan.popular && (
                 <span className="absolute -top-3 left-1/2 -translate-x-1/2 px-4 py-1 text-xs font-light tracking-wider uppercase bg-background border border-slate-light/30 rounded-full">
@@ -131,8 +130,8 @@ const Pricing = () => {
                 ))}
               </ul>
 
-              <Button 
-                variant={plan.popular ? "primary" : "outline"} 
+              <Button
+                variant={plan.popular ? "primary" : "outline"}
                 className="w-full"
                 size="lg"
               >

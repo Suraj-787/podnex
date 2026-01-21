@@ -14,7 +14,7 @@ export interface Podcast {
   status: PodcastStatus;
   duration: PodcastDuration;
   audioUrl?: string;
-  audioDuration?: number; // in seconds
+  audioDuration?: number; // in minutes (backend stores in minutes)
   audioSize?: number; // in bytes
   transcript?: string | TranscriptSegment[];
   errorMessage?: string;

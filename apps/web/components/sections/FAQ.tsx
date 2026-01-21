@@ -10,28 +10,28 @@ import {
 
 const faqs = [
   {
-    question: "How does voice cloning work?",
-    answer: "Our neural network analyzes audio samples to capture the unique characteristics of a voice—pitch, timbre, cadence, and emotional patterns. With just 30 seconds of high-quality audio, we create a voice model that can synthesize new speech while preserving the original voice's natural qualities.",
+    question: "How does PodNex work?",
+    answer: "Simply paste your notes or content into PodNex, choose your podcast duration and voices, and our AI transforms it into a natural-sounding conversation between a host and guest. The entire process takes just a few minutes.",
   },
   {
-    question: "Is my voice data secure?",
-    answer: "Absolutely. We're SOC 2 Type II compliant and all voice data is encrypted at rest and in transit. Your voice models are never used to train our base models, and you retain full ownership of all cloned voices. Enterprise customers can opt for dedicated infrastructure.",
+    question: "What voices are available?",
+    answer: "We offer 15+ professional AI voices with different personalities and speaking styles. You can choose separate voices for the host and guest to create engaging, dynamic conversations.",
   },
   {
-    question: "Can I use generated content commercially?",
-    answer: "Yes. All audio generated through PodNex is fully licensed for commercial use. You own the rights to any content created with your voice clones, and our stock voices are cleared for broadcast, streaming, and distribution.",
+    question: "Can I use the generated podcasts commercially?",
+    answer: "Yes! All podcasts generated through PodNex are yours to use however you like—commercially, for education, marketing, or personal projects. You retain full rights to your content.",
   },
   {
-    question: "What languages are supported?",
-    answer: "We support over 40 languages with native-quality synthesis, including English, Spanish, Mandarin, Japanese, German, French, Portuguese, and more. Multi-language support within a single episode is also available.",
+    question: "How long does it take to generate a podcast?",
+    answer: "Most podcasts are generated in 2-5 minutes depending on length and current server load. You'll receive real-time updates on the progress and can download your podcast as soon as it's ready.",
   },
   {
-    question: "How do I integrate the API?",
-    answer: "We offer SDKs for TypeScript, Python, and Go, along with a comprehensive REST API. Most developers are up and running within an hour. Our documentation includes quickstart guides, code samples, and a sandbox environment for testing.",
+    question: "Do you offer an API?",
+    answer: "Yes! Pro plan subscribers get full API access with webhook support. This allows you to integrate podcast generation directly into your applications and workflows. Check our documentation for implementation details.",
   },
   {
-    question: "What's your uptime guarantee?",
-    answer: "We maintain a 99.9% uptime SLA for all paid plans. Our infrastructure is distributed across multiple regions with automatic failover. Enterprise customers can access dedicated instances with custom SLA terms.",
+    question: "What if I'm not satisfied with the result?",
+    answer: "You can regenerate podcasts as many times as you want within your plan limits. Try different voice combinations, adjust your content, or change the duration to get the perfect result.",
   },
 ];
 
@@ -57,7 +57,7 @@ const FAQ = () => {
               <span className="italic text-slate-light">answered.</span>
             </h2>
             <p className="text-lg font-light text-muted-foreground leading-relaxed">
-              Everything you need to know about PodNex. 
+              Everything you need to know about PodNex.
               Can't find what you're looking for? Reach out to our team.
             </p>
           </motion.div>

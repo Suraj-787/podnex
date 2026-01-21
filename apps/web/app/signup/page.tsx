@@ -65,18 +65,7 @@ export default function SignUpPage() {
     }
   }
 
-  async function handleGoogleSignIn() {
-    setIsLoading(true);
-    try {
-      await signIn.social({
-        provider: "google",
-        callbackURL: "/",
-      });
-    } catch (error) {
-      toast.error("Failed to sign in with Google");
-      setIsLoading(false);
-    }
-  }
+
 
   return (
     <div className="min-h-screen bg-background relative flex items-center justify-center p-4">
@@ -118,9 +107,9 @@ export default function SignUpPage() {
                     <FormItem>
                       <FormLabel>Name</FormLabel>
                       <FormControl>
-                        <Input 
-                          placeholder="John Doe" 
-                          {...field} 
+                        <Input
+                          placeholder="John Doe"
+                          {...field}
                           className="bg-background/50 border-border/50"
                         />
                       </FormControl>
@@ -135,9 +124,9 @@ export default function SignUpPage() {
                     <FormItem>
                       <FormLabel>Email</FormLabel>
                       <FormControl>
-                        <Input 
-                          placeholder="name@example.com" 
-                          {...field} 
+                        <Input
+                          placeholder="name@example.com"
+                          {...field}
                           className="bg-background/50 border-border/50"
                         />
                       </FormControl>
@@ -152,10 +141,10 @@ export default function SignUpPage() {
                     <FormItem>
                       <FormLabel>Password</FormLabel>
                       <FormControl>
-                        <Input 
-                          type="password" 
-                          placeholder="••••••••" 
-                          {...field} 
+                        <Input
+                          type="password"
+                          placeholder="••••••••"
+                          {...field}
                           className="bg-background/50 border-border/50"
                         />
                       </FormControl>
@@ -163,9 +152,9 @@ export default function SignUpPage() {
                     </FormItem>
                   )}
                 />
-                <Button 
-                  type="submit" 
-                  className="w-full" 
+                <Button
+                  type="submit"
+                  className="w-full"
                   disabled={isLoading}
                   variant="primary"
                 >
@@ -177,33 +166,7 @@ export default function SignUpPage() {
               </form>
             </Form>
 
-            <div className="relative">
-              <div className="absolute inset-0 flex items-center">
-                <span className="w-full border-t border-border/50" />
-              </div>
-              <div className="relative flex justify-center text-xs uppercase">
-                <span className="bg-background px-2 text-muted-foreground">
-                  Or continue with
-                </span>
-              </div>
-            </div>
 
-            <Button 
-              variant="outline" 
-              type="button" 
-              className="w-full" 
-              onClick={handleGoogleSignIn}
-              disabled={isLoading}
-            >
-              {isLoading ? (
-                <Loader2 className="w-4 h-4 animate-spin mr-2" />
-              ) : (
-                <svg className="w-4 h-4 mr-2" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 18 19">
-                  <path fillRule="evenodd" d="M8.842 18.083a8.8 8.8 0 0 1-8.65-8.948 8.841 8.841 0 0 1 8.8-8.652h.153a8.464 8.464 0 0 1 5.7 2.257l-2.193 2.038A5.27 5.27 0 0 0 9.09 3.4a5.882 5.882 0 0 0-.2 11.76h.124a5.091 5.091 0 0 0 5.248-4.057L14.3 11H9V8h8.34c.066.543.095 1.09.088 1.636-.086 5.053-3.463 8.449-8.4 8.449l-.186-.002Z" clipRule="evenodd"/>
-                </svg>
-              )}
-              Google
-            </Button>
           </CardContent>
           <CardFooter className="flex justify-center">
             <p className="text-sm font-light text-muted-foreground">

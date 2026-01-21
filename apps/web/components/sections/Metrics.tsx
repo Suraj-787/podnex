@@ -4,10 +4,10 @@ import { motion, useInView } from "framer-motion";
 import { useRef, useEffect, useState } from "react";
 
 const stats = [
-  { value: 1000000, suffix: "+", label: "Hours Generated", prefix: "" },
-  { value: 50000, suffix: "+", label: "Active Creators", prefix: "" },
-  { value: 99.9, suffix: "%", label: "Uptime SLA", prefix: "" },
-  { value: 40, suffix: "+", label: "Languages", prefix: "" },
+  { value: 10000, suffix: "+", label: "Podcasts Generated", prefix: "" },
+  { value: 500, suffix: "+", label: "Active Users", prefix: "" },
+  { value: 99.5, suffix: "%", label: "Success Rate", prefix: "" },
+  { value: 15, suffix: "+", label: "Voice Options", prefix: "" },
 ];
 
 const AnimatedNumber = ({ value, suffix, prefix }: { value: number; suffix: string; prefix: string }) => {

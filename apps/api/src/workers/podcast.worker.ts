@@ -7,6 +7,7 @@ import { ScriptGeneratorService } from "../services/script-generator.service.js"
 import { AudioGeneratorService } from "../services/audio-generator.service.js";
 import { AudioCombinerService } from "../services/audio-combiner.service.js";
 import { StorageService } from "../services/storage.service.js";
+import { WebhookService } from "../services/webhook.service.js";
 
 async function processPodcastJob(job: Job<PodcastJobData>) {
     const { podcastId, userId, noteContent, duration, hostVoice, guestVoice, ttsProvider } = job.data;
@@ -16,6 +17,14 @@ async function processPodcastJob(job: Job<PodcastJobData>) {
 
         // Update status to processing
         await updateProgress(podcastId, 0, "PROCESSING", "Starting generation");
+
+        // Trigger webhook: podcast.processing
+        await WebhookService.sendEvent(userId, "PODCAST_PROCESSING", {
+            podcastId,
+            status: "PROCESSING",
+            progress: 0,
+            timestamp: new Date().toISOString(),
+        }).catch(err => console.error("Webhook error:", err));
 
         // Step 1: Generate script (0-25%)
         await job.updateProgress(10);
@@ -104,6 +113,15 @@ async function processPodcastJob(job: Job<PodcastJobData>) {
 
         console.log(`✅ Podcast ${podcastId} completed`);
 
+        // Trigger webhook: podcast.completed
+        await WebhookService.sendEvent(userId, "PODCAST_COMPLETED", {
+            podcastId,
+            status: "COMPLETED",
+            audioUrl,
+            audioDuration,
+            timestamp: new Date().toISOString(),
+        }).catch(err => console.error("Webhook error:", err));
+
         return { success: true, audioUrl };
     } catch (error: any) {
         console.error(`❌ Podcast ${podcastId} failed:`, error);
@@ -126,6 +144,14 @@ async function processPodcastJob(job: Job<PodcastJobData>) {
                 stackTrace: error.stack,
             },
         });
+
+        // Trigger webhook: podcast.failed
+        await WebhookService.sendEvent(userId, "PODCAST_FAILED", {
+            podcastId,
+            status: "FAILED",
+            error: error.message,
+            timestamp: new Date().toISOString(),
+        }).catch(err => console.error("Webhook error:", err));
 
         throw error;
     }

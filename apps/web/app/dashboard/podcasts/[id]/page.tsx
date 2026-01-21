@@ -1,210 +1,75 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
+import { usePodcast, useDeletePodcast, useRetryPodcast, useUpdatePodcast } from "@/lib/hooks";
 import { Button } from "@workspace/ui/components/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@workspace/ui/components/card";
+import { Badge } from "@workspace/ui/components/badge";
 import {
   ArrowLeft,
-  Share2,
   Download,
   Trash2,
+  Share2,
+  Clock,
+  Calendar,
+  FileText,
+  AlertCircle,
+  CheckCircle,
+  Loader2,
+  RotateCcw,
   Edit2,
   Check,
   X,
 } from "lucide-react";
+import { formatDistanceToNow } from "date-fns";
 import { PodcastPlayer } from "@/components/podcasts/PodcastPlayer";
-import { ProgressBar } from "@/components/podcasts/ProgressBar";
+import { ProgressIndicator } from "@/components/podcasts/ProgressIndicator";
 import { TranscriptViewer } from "@/components/podcasts/TranscriptViewer";
-import { PodcastMetadata } from "@/components/podcasts/PodcastMetadata";
-import { StatusBadge } from "@/components/podcasts/StatusBadge";
-import { ConfirmDialog } from "@/components/podcasts/ConfirmDialog";
-import { Podcast, TranscriptSegment } from "@/lib/types/podcast.types";
+import { useState } from "react";
 import { toast } from "sonner";
 
-export default function PodcastDetailPage({
-  params
-}: {
-  params: Promise<{ id: string }>
-}) {
+export default function PodcastDetailPage() {
+  const params = useParams();
   const router = useRouter();
-  const playerRef = useRef<{ seekTo: (time: number) => void } | null>(null);
-  const [podcastId, setPodcastId] = useState<string | null>(null);
-  const [podcast, setPodcast] = useState<Podcast | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const podcastId = params.id as string;
   const [isEditingTitle, setIsEditingTitle] = useState(false);
   const [editedTitle, setEditedTitle] = useState("");
-  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
 
-  // Unwrap params and fetch podcast data
-  useEffect(() => {
-    const initializePage = async () => {
-      try {
-        const resolvedParams = await params;
-        setPodcastId(resolvedParams.id);
+  const { data: podcast, isLoading } = usePodcast(podcastId);
+  const deleteMutation = useDeletePodcast();
+  const retryMutation = useRetryPodcast();
+  const updateMutation = useUpdatePodcast();
 
-        // Fetch podcast data from API
-        const response = await fetch(`/api/podcasts/${resolvedParams.id}`);
+  const handleDelete = async () => {
+    if (!confirm("Are you sure you want to delete this podcast?")) return;
 
-        if (!response.ok) {
-          throw new Error('Failed to fetch podcast');
-        }
-
-        const result = await response.json();
-        const podcastData = result.data || result; // Handle both {data: ...} and direct response
-        setPodcast(podcastData);
-        setEditedTitle(podcastData.title || "");
-      } catch (error) {
-        console.error("Error loading podcast:", error);
-        // Don't show toast here - let the UI handle the error state
-        setPodcast(null);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    initializePage();
-  }, [params]);
-
-  // Polling for status updates
-  useEffect(() => {
-    if (!podcastId || !podcast) return;
-
-    // Poll every 3 seconds if podcast is processing or queued
-    if (podcast.status === "PROCESSING" || podcast.status === "QUEUED") {
-      const interval = setInterval(async () => {
-        try {
-          const response = await fetch(`/api/podcasts/${podcastId}`);
-          if (response.ok) {
-            const data = await response.json();
-            const newPodcast = data.data;
-
-            // Check if status changed to completed
-            if (podcast.status !== "COMPLETED" && newPodcast.status === "COMPLETED") {
-              toast.success("Podcast completed!", {
-                description: "Your podcast has been successfully generated.",
-              });
-            }
-
-            // Check if status changed to failed
-            if (podcast.status !== "FAILED" && newPodcast.status === "FAILED") {
-              toast.error("Generation failed", {
-                description: newPodcast.error || "An error occurred during generation.",
-              });
-            }
-
-            setPodcast(newPodcast);
-          }
-        } catch (error) {
-          console.error("Error polling podcast status:", error);
-        }
-      }, 3000);
-
-      return () => clearInterval(interval);
-    }
-  }, [podcastId, podcast]);
-
-  const handleBack = () => {
-    router.push("/dashboard/podcasts");
-  };
-
-  const handleShare = () => {
-    if (!podcastId) return;
-
-    // Copy link to clipboard
-    const url = `${window.location.origin}/dashboard/podcasts/${podcastId}`;
-    navigator.clipboard.writeText(url);
-    toast.success("Link copied!", {
-      description: "Podcast link has been copied to your clipboard.",
+    deleteMutation.mutate(podcastId, {
+      onSuccess: () => {
+        router.push("/dashboard/podcasts");
+      },
     });
   };
 
-  const handleDownload = async () => {
-    if (!podcastId || !podcast?.audioUrl) {
-      toast.error("Download unavailable", {
-        description: "Audio file is not ready yet.",
-      });
-      return;
-    }
-
-    try {
-      const response = await fetch(`/api/podcasts/${podcastId}/download`);
-
-      if (!response.ok) {
-        throw new Error("Failed to get download URL");
-      }
-
-      const data = await response.json();
-
-      if (data.success && data.data.url) {
-        // Open download URL in new tab
-        window.open(data.data.url, '_blank');
-        toast.success("Downloading...", {
-          description: "Your podcast download will begin shortly.",
-        });
-      } else {
-        throw new Error("Invalid response from server");
-      }
-    } catch (error) {
-      console.error("Download error:", error);
-      toast.error("Download failed", {
-        description: "Unable to download podcast. Please try again.",
-      });
-    }
+  const handleRetry = () => {
+    retryMutation.mutate(podcastId);
   };
 
-  const handleDelete = () => {
-    setShowDeleteDialog(true);
+  const handleShare = () => {
+    const url = `${window.location.origin}/dashboard/podcasts/${podcastId}`;
+    navigator.clipboard.writeText(url);
+    toast.success("Link copied to clipboard!");
   };
 
-  const confirmDelete = async () => {
-    if (!podcastId) return;
-
-    try {
-      const response = await fetch(`/api/podcasts/${podcastId}`, {
-        method: 'DELETE'
-      });
-
-      if (!response.ok) {
-        throw new Error("Failed to delete podcast");
+  const handleSaveTitle = () => {
+    if (!podcast) return;
+    updateMutation.mutate(
+      { id: podcastId, data: { title: editedTitle } },
+      {
+        onSuccess: () => {
+          setIsEditingTitle(false);
+        },
       }
-
-      toast.success("Podcast deleted", {
-        description: "Your podcast has been successfully deleted.",
-      });
-      router.push("/dashboard/podcasts");
-    } catch (error) {
-      console.error("Delete error:", error);
-      toast.error("Delete failed", {
-        description: "Unable to delete podcast. Please try again.",
-      });
-    }
-  };
-
-  const handleSaveTitle = async () => {
-    if (!podcast || !podcastId) return;
-
-    try {
-      const response = await fetch(`/api/podcasts/${podcastId}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ title: editedTitle })
-      });
-
-      if (!response.ok) {
-        throw new Error("Failed to update title");
-      }
-
-      setPodcast({ ...podcast, title: editedTitle });
-      setIsEditingTitle(false);
-      toast.success("Title updated", {
-        description: "Your podcast title has been saved.",
-      });
-    } catch (error) {
-      console.error("Update error:", error);
-      toast.error("Update failed", {
-        description: "Unable to update title. Please try again.",
-      });
-    }
+    );
   };
 
   const handleCancelEdit = () => {
@@ -212,380 +77,289 @@ export default function PodcastDetailPage({
     setIsEditingTitle(false);
   };
 
-  const handleSeekToTimestamp = (timestamp: number) => {
-    playerRef.current?.seekTo(timestamp);
+  const getStatusBadge = () => {
+    if (!podcast) return null;
+
+    switch (podcast.status) {
+      case "COMPLETED":
+        return (
+          <Badge className="bg-green-500/10 text-green-500 hover:bg-green-500/20">
+            <CheckCircle className="h-3 w-3 mr-1" />
+            Completed
+          </Badge>
+        );
+      case "PROCESSING":
+        return (
+          <Badge className="bg-blue-500/10 text-blue-500 hover:bg-blue-500/20">
+            <Loader2 className="h-3 w-3 mr-1 animate-spin" />
+            Processing
+          </Badge>
+        );
+      case "FAILED":
+        return (
+          <Badge className="bg-red-500/10 text-red-500 hover:bg-red-500/20">
+            <AlertCircle className="h-3 w-3 mr-1" />
+            Failed
+          </Badge>
+        );
+      case "QUEUED":
+        return (
+          <Badge className="bg-yellow-500/10 text-yellow-500 hover:bg-yellow-500/20">
+            <Clock className="h-3 w-3 mr-1" />
+            Queued
+          </Badge>
+        );
+      default:
+        return null;
+    }
   };
 
-  // Loading state
   if (isLoading) {
     return (
-      <div className="space-y-8">
-        <div className="flex items-center justify-center min-h-[400px]">
-          <div className="text-center space-y-3">
-            <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin mx-auto" />
-            <p className="text-sm text-muted-foreground">Loading podcast...</p>
+      <div className="space-y-6">
+        <div className="flex items-center gap-4">
+          <div className="h-10 w-10 bg-muted animate-pulse rounded" />
+          <div className="flex-1">
+            <div className="h-8 w-64 bg-muted animate-pulse rounded mb-2" />
+            <div className="h-4 w-32 bg-muted animate-pulse rounded" />
           </div>
         </div>
+        <div className="h-96 bg-muted animate-pulse rounded-lg" />
       </div>
     );
   }
 
-  // Podcast not found state
   if (!podcast) {
     return (
-      <div className="space-y-8">
-        <div className="flex flex-col items-center justify-center min-h-[400px] text-center space-y-4">
-          <div className="rounded-full bg-muted p-3">
-            <X className="w-6 h-6 text-muted-foreground" />
-          </div>
-          <div className="space-y-2">
-            <h3 className="text-lg font-semibold">Podcast Not Found</h3>
-            <p className="text-sm text-muted-foreground max-w-md">
-              The podcast you're looking for doesn't exist or has been deleted.
-            </p>
-          </div>
-          <Button onClick={() => router.push("/dashboard/podcasts")}>
-            <ArrowLeft className="w-4 h-4 mr-2" />
-            Back to Podcasts
-          </Button>
-        </div>
+      <div className="flex flex-col items-center justify-center py-20">
+        <AlertCircle className="h-12 w-12 text-muted-foreground mb-4" />
+        <h2 className="text-xl font-semibold mb-2">Podcast not found</h2>
+        <p className="text-muted-foreground mb-4">
+          This podcast may have been deleted or doesn't exist.
+        </p>
+        <Button onClick={() => router.push("/dashboard/podcasts")}>
+          Back to Podcasts
+        </Button>
       </div>
     );
   }
 
   return (
-    <div className="space-y-8">
-      {/* Header Section */}
-      <div className="flex flex-col gap-6">
-        {/* Back Button */}
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={handleBack}
-          className="-ml-2 w-fit text-muted-foreground hover:text-foreground"
-        >
-          <ArrowLeft className="w-4 h-4 mr-2" />
-          Back to Podcasts
-        </Button>
-
-        {/* Title and Actions Row */}
-        <div className="flex flex-col md:flex-row md:items-start justify-between gap-4">
-          {/* Title Section */}
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="flex items-start justify-between gap-4">
+        <div className="flex items-start gap-4 flex-1 min-w-0">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => router.push("/dashboard/podcasts")}
+          >
+            <ArrowLeft className="h-4 w-4" />
+          </Button>
           <div className="flex-1 min-w-0">
-            {/* Editable Title */}
-            <div className="space-y-3">
+            <div className="flex items-center gap-2 mb-2">
               {isEditingTitle ? (
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 flex-1">
                   <input
                     type="text"
                     value={editedTitle}
                     onChange={(e) => setEditedTitle(e.target.value)}
-                    className="flex-1 bg-background border border-border rounded-lg px-4 py-2 text-2xl md:text-3xl font-serif font-medium text-foreground focus:outline-none focus:ring-2 focus:ring-primary/20"
+                    className="flex-1 bg-background border border-border rounded-lg px-4 py-2 text-2xl md:text-3xl font-serif font-medium focus:outline-none focus:ring-2 focus:ring-primary/20"
                     autoFocus
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") handleSaveTitle();
+                      if (e.key === "Escape") handleCancelEdit();
+                    }}
                   />
-                  <Button
-                    size="icon"
-                    variant="ghost"
-                    onClick={handleSaveTitle}
-                    className="text-green-400 hover:text-green-300 hover:bg-green-500/10 flex-shrink-0"
-                  >
-                    <Check className="w-5 h-5" />
+                  <Button size="icon" variant="ghost" onClick={handleSaveTitle}>
+                    <Check className="h-4 w-4 text-green-500" />
                   </Button>
-                  <Button
-                    size="icon"
-                    variant="ghost"
-                    onClick={handleCancelEdit}
-                    className="text-red-400 hover:text-red-300 hover:bg-red-500/10 flex-shrink-0"
-                  >
-                    <X className="w-5 h-5" />
+                  <Button size="icon" variant="ghost" onClick={handleCancelEdit}>
+                    <X className="h-4 w-4 text-red-500" />
                   </Button>
                 </div>
               ) : (
-                <div className="group flex items-center gap-3">
-                  <h2 className="text-2xl md:text-3xl font-serif font-medium text-foreground">
-                    {podcast.title || "Untitled Podcast"}
-                  </h2>
+                <div className="group flex items-center gap-2">
+                  <h1 className="font-serif text-2xl md:text-3xl font-medium truncate">
+                    {podcast.title || `Podcast ${podcast.id.slice(0, 8)}`}
+                  </h1>
                   <Button
                     size="icon"
                     variant="ghost"
-                    onClick={() => setIsEditingTitle(true)}
-                    className="opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-foreground flex-shrink-0"
+                    onClick={() => {
+                      setEditedTitle(podcast.title || "");
+                      setIsEditingTitle(true);
+                    }}
+                    className="opacity-0 group-hover:opacity-100 transition-opacity"
                   >
-                    <Edit2 className="w-4 h-4" />
+                    <Edit2 className="h-4 w-4" />
                   </Button>
                 </div>
               )}
-
-              {/* Status and Metadata */}
-              <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
-                <StatusBadge status={podcast.status} />
-                <span>•</span>
-                <span>{Math.floor((podcast.audioDuration || 0) / 60)}:{String((podcast.audioDuration || 0) % 60).padStart(2, '0')}</span>
-                <span>•</span>
-                <span>{new Date(podcast.createdAt).toLocaleDateString('en-US', {
-                  month: 'short',
-                  day: 'numeric',
-                  year: 'numeric'
-                })}</span>
-              </div>
+              {getStatusBadge()}
             </div>
-          </div>
-
-          {/* Action Buttons */}
-          <div className="flex items-center gap-2 flex-shrink-0">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handleShare}
-              className="gap-2"
-            >
-              <Share2 className="w-4 h-4" />
-              <span className="hidden sm:inline">Share</span>
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handleDownload}
-              className="gap-2"
-              disabled={podcast.status !== "COMPLETED"}
-            >
-              <Download className="w-4 h-4" />
-              <span className="hidden sm:inline">Download</span>
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handleDelete}
-              className="gap-2 text-red-400 hover:text-red-300 hover:bg-red-500/10 border-red-500/20"
-            >
-              <Trash2 className="w-4 h-4" />
-            </Button>
+            <div className="flex items-center gap-4 text-sm text-muted-foreground">
+              <div className="flex items-center gap-1">
+                <Calendar className="h-3 w-3" />
+                <span>{formatDistanceToNow(new Date(podcast.createdAt), { addSuffix: true })}</span>
+              </div>
+              {podcast.audioDuration && (
+                <div className="flex items-center gap-1">
+                  <Clock className="h-3 w-3" />
+                  <span>{Math.round(podcast.audioDuration)} min</span>
+                </div>
+              )}
+            </div>
           </div>
         </div>
-      </div>
 
-      {/* Main Content */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {/* Left Column - Main Content */}
-        <div className="lg:col-span-2 space-y-8">
-          {/* QUEUED State */}
-          {podcast.status === "QUEUED" && (
-            <div className="rounded-lg border border-yellow-500/20 bg-yellow-500/5 p-6">
-              <div className="flex items-start gap-3">
-                <div className="rounded-full bg-yellow-500/10 p-2">
-                  <div className="w-5 h-5 border-2 border-yellow-400 border-t-transparent rounded-full animate-spin" />
-                </div>
-                <div className="flex-1">
-                  <h3 className="text-lg font-semibold text-yellow-400 mb-1">
-                    Queued for Generation
-                  </h3>
-                  <p className="text-sm text-muted-foreground">
-                    Your podcast is in the queue and will begin processing shortly. This typically takes a few moments depending on server load.
-                  </p>
-                  <div className="mt-4 flex items-center gap-2 text-xs text-muted-foreground">
-                    <span>Position in queue: Calculating...</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* PROCESSING State */}
-          {podcast.status === "PROCESSING" && (
-            <div className="rounded-lg border border-blue-500/20 bg-blue-500/5 p-6">
-              <ProgressBar
-                progress={podcast.progress || 0}
-                status="PROCESSING"
-                currentStep={podcast.currentStep}
-              />
-            </div>
-          )}
-
-          {/* COMPLETED State - Audio Player */}
+        {/* Actions */}
+        <div className="flex items-center gap-2 shrink-0">
           {podcast.status === "COMPLETED" && podcast.audioUrl && (
-            <PodcastPlayer
-              ref={playerRef}
-              audioUrl={podcast.audioUrl}
-              duration={podcast.audioDuration || 0}
-              title={podcast.title || "Untitled Podcast"}
-            />
+            <>
+              <Button variant="outline" size="sm" onClick={handleShare}>
+                <Share2 className="h-4 w-4 mr-2" />
+                Share
+              </Button>
+              <Button variant="outline" size="sm" asChild>
+                <a href={podcast.audioUrl} download>
+                  <Download className="h-4 w-4 mr-2" />
+                  Download
+                </a>
+              </Button>
+            </>
           )}
-
-          {/* FAILED State */}
           {podcast.status === "FAILED" && (
-            <div className="rounded-lg border border-red-500/20 bg-red-500/5 p-6">
-              <div className="flex items-start gap-3">
-                <div className="rounded-full bg-red-500/10 p-2">
-                  <X className="w-5 h-5 text-red-400" />
-                </div>
-                <div className="flex-1">
-                  <h3 className="text-lg font-semibold text-red-400 mb-1">
-                    Generation Failed
-                  </h3>
-                  <p className="text-sm text-muted-foreground mb-4">
-                    {podcast.errorMessage || "An error occurred while generating your podcast. This could be due to content issues, API limits, or server errors."}
-                  </p>
-                  <div className="flex gap-2">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="text-red-400 border-red-500/20 hover:bg-red-500/10"
-                      onClick={async () => {
-                        try {
-                          const response = await fetch(`/api/podcasts/${podcastId}/retry`, {
-                            method: 'POST'
-                          });
-
-                          if (!response.ok) {
-                            throw new Error("Failed to retry podcast");
-                          }
-
-                          toast.success("Retrying generation", {
-                            description: "Your podcast has been queued for regeneration.",
-                          });
-
-                          // Refresh podcast data
-                          const updatedResponse = await fetch(`/api/podcasts/${podcastId}`);
-                          if (updatedResponse.ok) {
-                            const data = await updatedResponse.json();
-                            setPodcast(data.data);
-                          }
-                        } catch (error) {
-                          console.error("Retry error:", error);
-                          toast.error("Retry failed", {
-                            description: "Unable to retry podcast generation.",
-                          });
-                        }
-                      }}
-                    >
-                      Retry Generation
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => {
-                        toast.error("Error details", {
-                          description: podcast.errorMessage || "No additional error details available.",
-                        });
-                      }}
-                    >
-                      View Details
-                    </Button>
-                  </div>
-                </div>
-              </div>
-            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleRetry}
+              disabled={retryMutation.isPending}
+            >
+              <RotateCcw className="h-4 w-4 mr-2" />
+              Retry
+            </Button>
           )}
-
-          {/* Transcript Section - Only show for COMPLETED */}
-          {podcast.status === "COMPLETED" && podcast.transcript && Array.isArray(podcast.transcript) && podcast.transcript.length > 0 && (
-            <TranscriptViewer
-              transcript={podcast.transcript as TranscriptSegment[]}
-              onSeek={handleSeekToTimestamp}
-            />
-          )}
-
-          {/* No Transcript Available for non-completed podcasts */}
-          {podcast.status !== "COMPLETED" && (
-            <div className="rounded-lg border border-border/40 bg-card p-8 text-center">
-              <div className="text-muted-foreground">
-                <h3 className="font-semibold text-foreground mb-2">Transcript Unavailable</h3>
-                <p className="text-sm">
-                  The transcript will be available once the podcast generation is complete.
-                </p>
-              </div>
-            </div>
-          )}
-        </div>
-
-        {/* Right Column - Metadata Sidebar */}
-        <div className="lg:col-span-1">
-          <div className="lg:sticky lg:top-6 space-y-6">
-            {/* Status Info Card */}
-            <div className="rounded-lg border border-border/40 bg-card p-6">
-              <h3 className="font-semibold text-foreground mb-4 flex items-center gap-2">
-                Status
-              </h3>
-              <div className="space-y-3">
-                <div className="flex items-center justify-between">
-                  <span className="text-sm text-muted-foreground">Current Status</span>
-                  <StatusBadge status={podcast.status} />
-                </div>
-                {podcast.status === "PROCESSING" && (
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm text-muted-foreground">Progress</span>
-                    <span className="text-sm font-medium text-foreground">
-                      {podcast.progress || 0}%
-                    </span>
-                  </div>
-                )}
-                {podcast.status === "COMPLETED" && podcast.completedAt && (
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm text-muted-foreground">Completed</span>
-                    <span className="text-sm font-medium text-foreground">
-                      {new Date(podcast.completedAt).toLocaleDateString('en-US', {
-                        month: 'short',
-                        day: 'numeric',
-                        hour: '2-digit',
-                        minute: '2-digit',
-                      })}
-                    </span>
-                  </div>
-                )}
-                {podcast.status === "FAILED" && (
-                  <div className="pt-2 border-t border-border/40">
-                    <span className="text-xs text-red-400 block">
-                      Error: {podcast.errorMessage?.substring(0, 100) || "Unknown error"}
-                    </span>
-                  </div>
-                )}
-              </div>
-            </div>
-
-            {/* Metadata */}
-            <PodcastMetadata podcast={podcast} />
-
-            {/* Quick Actions for Completed Podcasts */}
-            {podcast.status === "COMPLETED" && (
-              <div className="rounded-lg border border-border/40 bg-card p-6">
-                <h3 className="font-semibold text-foreground mb-4">Quick Actions</h3>
-                <div className="space-y-2">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={handleDownload}
-                    className="w-full justify-start gap-2"
-                  >
-                    <Download className="w-4 h-4" />
-                    Download Audio
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={handleShare}
-                    className="w-full justify-start gap-2"
-                  >
-                    <Share2 className="w-4 h-4" />
-                    Share Podcast
-                  </Button>
-                </div>
-              </div>
-            )}
-          </div>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleDelete}
+            disabled={deleteMutation.isPending}
+          >
+            <Trash2 className="h-4 w-4 mr-2" />
+            Delete
+          </Button>
         </div>
       </div>
 
-      {/* Delete Confirmation Dialog */}
-      <ConfirmDialog
-        open={showDeleteDialog}
-        onOpenChange={setShowDeleteDialog}
-        title="Delete Podcast"
-        description="Are you sure you want to delete this podcast? This action cannot be undone."
-        confirmText="Delete"
-        cancelText="Cancel"
-        variant="destructive"
-        onConfirm={confirmDelete}
-      />
+      {/* Content based on status */}
+      {podcast.status === "QUEUED" && (
+        <Card>
+          <CardContent className="flex flex-col items-center justify-center py-12">
+            <Clock className="h-12 w-12 text-yellow-500 mb-4" />
+            <h3 className="text-lg font-semibold mb-2">Podcast Queued</h3>
+            <p className="text-muted-foreground text-center max-w-md">
+              Your podcast is in the queue and will start processing shortly.
+            </p>
+          </CardContent>
+        </Card>
+      )}
+
+      {podcast.status === "PROCESSING" && (
+        <ProgressIndicator podcastId={podcast.id} />
+      )}
+
+      {podcast.status === "COMPLETED" && podcast.audioUrl && (
+        <div className="space-y-6">
+          {/* Audio Player */}
+          <PodcastPlayer audioUrl={podcast.audioUrl} title={podcast.title} />
+
+          {/* Transcript */}
+          {podcast.transcript && (
+            <TranscriptViewer transcript={podcast.transcript} />
+          )}
+
+          {/* Metadata */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg">Details</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div>
+                  <p className="text-xs text-muted-foreground uppercase tracking-wide mb-1">
+                    Duration
+                  </p>
+                  <p className="font-medium">
+                    {podcast.audioDuration
+                      ? `${Math.floor(podcast.audioDuration)}:${String(Math.floor((podcast.audioDuration % 1) * 60)).padStart(2, "0")}`
+                      : "N/A"}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-xs text-muted-foreground uppercase tracking-wide mb-1">
+                    File Size
+                  </p>
+                  <p className="font-medium">
+                    {podcast.audioSize
+                      ? `${(podcast.audioSize / 1024 / 1024).toFixed(2)} MB`
+                      : "N/A"}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-xs text-muted-foreground uppercase tracking-wide mb-1">
+                    Created
+                  </p>
+                  <p className="font-medium">
+                    {new Date(podcast.createdAt).toLocaleDateString()}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-xs text-muted-foreground uppercase tracking-wide mb-1">
+                    Completed
+                  </p>
+                  <p className="font-medium">
+                    {podcast.completedAt
+                      ? new Date(podcast.completedAt).toLocaleDateString()
+                      : "N/A"}
+                  </p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Original Content */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg flex items-center gap-2">
+                <FileText className="h-4 w-4" />
+                Original Content
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-sm text-muted-foreground whitespace-pre-wrap">
+                {podcast.noteContent}
+              </p>
+            </CardContent>
+          </Card>
+        </div>
+      )}
+
+      {podcast.status === "FAILED" && (
+        <Card className="border-red-500/20">
+          <CardContent className="flex flex-col items-center justify-center py-12">
+            <AlertCircle className="h-12 w-12 text-red-500 mb-4" />
+            <h3 className="text-lg font-semibold mb-2">Generation Failed</h3>
+            <p className="text-muted-foreground text-center max-w-md mb-4">
+              {podcast.errorMessage || "An error occurred while generating your podcast."}
+            </p>
+            <Button onClick={handleRetry} disabled={retryMutation.isPending}>
+              <RotateCcw className="h-4 w-4 mr-2" />
+              {retryMutation.isPending ? "Retrying..." : "Retry Generation"}
+            </Button>
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 }

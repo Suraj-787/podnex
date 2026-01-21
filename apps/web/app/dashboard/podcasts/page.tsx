@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@workspace/ui/components/button";
 import { Input } from "@workspace/ui/components/input";
@@ -15,7 +15,7 @@ import { PodcastList } from "@/components/podcasts/PodcastList";
 import { EmptyState } from "@/components/podcasts/EmptyState";
 import {
   Podcast,
-  PodcastFilters as Filters,
+  PodcastStatus,
   ViewMode,
 } from "@/lib/types/podcast.types";
 import {
@@ -23,114 +23,36 @@ import {
   Plus,
   LayoutGrid,
   List,
-  Mic,
-  SlidersHorizontal,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { toast } from "sonner";
+import { usePodcasts, useDeletePodcast, useRetryPodcast } from "@/lib/hooks";
 
 export default function PodcastsPage() {
   const router = useRouter();
-  const [allPodcasts, setAllPodcasts] = useState<Podcast[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
   const [viewMode, setViewMode] = useState<ViewMode>("grid");
-  const [filters, setFilters] = useState<Filters>({
-    status: "ALL",
-    sort: "createdAt_desc",
-    page: 1,
+  const [status, setStatus] = useState<PodcastStatus | "ALL">("ALL");
+  const [search, setSearch] = useState("");
+  const [sort, setSort] = useState<"createdAt_desc" | "createdAt_asc" | "duration_desc" | "duration_asc">("createdAt_desc");
+  const [page, setPage] = useState(1);
+
+  // Fetch podcasts with real-time updates
+  const { data, isLoading } = usePodcasts({
+    page,
     limit: 12,
+    status: status === "ALL" ? undefined : status,
+    search: search || undefined,
+    sort,
   });
 
-  // Fetch podcasts from API
-  useEffect(() => {
-    const fetchPodcasts = async () => {
-      try {
-        setIsLoading(true);
-        const response = await fetch('/api/podcasts');
+  const deleteMutation = useDeletePodcast();
+  const retryMutation = useRetryPodcast();
 
-        if (!response.ok) {
-          throw new Error('Failed to fetch podcasts');
-        }
-
-        const result = await response.json();
-        // Backend returns { success: true, data: [...], pagination: {...} }
-        setAllPodcasts(result.data || []);
-      } catch (error) {
-        console.error('Error fetching podcasts:', error);
-        // Don't show toast on initial load - empty state will show
-        setAllPodcasts([]);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchPodcasts();
-  }, []);
-
-  // Polling for podcasts with processing/queued status
-  useEffect(() => {
-    // Check if there are any podcasts being processed or queued
-    const hasActiveProcessing = allPodcasts.some(
-      p => p.status === "PROCESSING" || p.status === "QUEUED"
-    );
-
-    if (hasActiveProcessing) {
-      const interval = setInterval(async () => {
-        try {
-          const response = await fetch('/api/podcasts');
-          if (response.ok) {
-            const result = await response.json();
-            setAllPodcasts(result.data || []);
-          }
-        } catch (error) {
-          console.error('Error polling podcasts:', error);
-        }
-      }, 3000); // Poll every 3 seconds
-
-      return () => clearInterval(interval);
-    }
-  }, [allPodcasts]);
-
-  // Apply filters
-  const filteredPodcasts = allPodcasts.filter((podcast) => {
-    if (filters.status && filters.status !== "ALL") {
-      if (podcast.status !== filters.status) return false;
-    }
-    if (filters.search) {
-      const searchLower = filters.search.toLowerCase();
-      const titleMatch = podcast.title?.toLowerCase().includes(searchLower);
-      const contentMatch = podcast.noteContent.toLowerCase().includes(searchLower);
-      if (!titleMatch && !contentMatch) return false;
-    }
-    return true;
-  });
-
-  // Apply sorting
-  const sortedPodcasts = [...filteredPodcasts].sort((a, b) => {
-    switch (filters.sort) {
-      case "createdAt_desc":
-        return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
-      case "createdAt_asc":
-        return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
-      case "duration_desc":
-        return (b.audioDuration || 0) - (a.audioDuration || 0);
-      case "duration_asc":
-        return (a.audioDuration || 0) - (b.audioDuration || 0);
-      default:
-        return 0;
-    }
-  });
-
-  // Pagination
-  const totalPodcasts = sortedPodcasts.length;
-  const totalPages = Math.ceil(totalPodcasts / (filters.limit || 12));
-  const startIndex = ((filters.page || 1) - 1) * (filters.limit || 12);
-  const endIndex = startIndex + (filters.limit || 12);
-  const paginatedPodcasts = sortedPodcasts.slice(startIndex, endIndex);
+  const podcasts = data?.podcasts || [];
+  const pagination = data?.pagination;
 
   // Stats
-  const completedCount = allPodcasts.filter(p => p.status === "COMPLETED").length;
-  const processingCount = allPodcasts.filter(p => p.status === "PROCESSING").length;
+  const completedCount = podcasts.filter(p => p.status === "COMPLETED").length;
+  const processingCount = podcasts.filter(p => p.status === "PROCESSING").length;
 
   const handleCreateNew = () => {
     router.push("/dashboard/podcasts/new");
@@ -144,64 +66,19 @@ export default function PodcastsPage() {
     if (!confirm('Are you sure you want to delete this podcast?')) {
       return;
     }
-
-    try {
-      const response = await fetch(`/api/podcasts/${podcast.id}`, {
-        method: 'DELETE',
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to delete podcast');
-      }
-
-      // Remove from local state
-      setAllPodcasts(allPodcasts.filter(p => p.id !== podcast.id));
-
-      toast.success('Podcast deleted', {
-        description: 'Your podcast has been successfully deleted.',
-      });
-    } catch (error) {
-      console.error('Error deleting podcast:', error);
-      toast.error('Failed to delete podcast', {
-        description: 'Please try again.',
-      });
-    }
+    deleteMutation.mutate(podcast.id);
   };
 
   const handleRetry = async (podcast: Podcast) => {
-    try {
-      const response = await fetch(`/api/podcasts/${podcast.id}/retry`, {
-        method: 'POST',
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to retry podcast generation');
-      }
-
-      const updatedPodcast = await response.json();
-
-      // Update local state
-      setAllPodcasts(allPodcasts.map(p =>
-        p.id === podcast.id ? updatedPodcast : p
-      ));
-
-      toast.success('Podcast queued for regeneration', {
-        description: 'Your podcast will be processed shortly.',
-      });
-    } catch (error) {
-      console.error('Error retrying podcast:', error);
-      toast.error('Failed to retry podcast', {
-        description: 'Please try again.',
-      });
-    }
+    retryMutation.mutate(podcast.id);
   };
 
   const handleViewDetails = (podcast: Podcast) => {
     router.push(`/dashboard/podcasts/${podcast.id}`);
   };
 
-  const handlePageChange = (page: number) => {
-    setFilters({ ...filters, page });
+  const handlePageChange = (newPage: number) => {
+    setPage(newPage);
   };
 
   // Show loading state
@@ -231,7 +108,7 @@ export default function PodcastsPage() {
         <div>
           <h1 className="font-serif text-3xl font-medium">Podcasts</h1>
           <p className="text-muted-foreground mt-1 text-sm">
-            {allPodcasts.length} podcasts · {completedCount} completed
+            {pagination?.total || 0} podcasts · {completedCount} completed
             {processingCount > 0 && ` · ${processingCount} processing`}
           </p>
         </div>
@@ -242,7 +119,7 @@ export default function PodcastsPage() {
       </div>
 
       {/* Show empty state if no podcasts at all */}
-      {allPodcasts.length === 0 ? (
+      {podcasts.length === 0 && !search && status === "ALL" ? (
         <EmptyState onCreateNew={handleCreateNew} />
       ) : (
         <>
@@ -253,8 +130,11 @@ export default function PodcastsPage() {
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
                 placeholder="Search podcasts..."
-                value={filters.search || ""}
-                onChange={(e) => setFilters({ ...filters, search: e.target.value })}
+                value={search}
+                onChange={(e) => {
+                  setSearch(e.target.value);
+                  setPage(1); // Reset to first page on search
+                }}
                 className="pl-9 h-9"
               />
             </div>
@@ -263,8 +143,11 @@ export default function PodcastsPage() {
             <div className="flex items-center gap-2">
               {/* Status Filter */}
               <Select
-                value={filters.status || "ALL"}
-                onValueChange={(value) => setFilters({ ...filters, status: value as Filters["status"] })}
+                value={status}
+                onValueChange={(value) => {
+                  setStatus(value as PodcastStatus | "ALL");
+                  setPage(1); // Reset to first page on filter change
+                }}
               >
                 <SelectTrigger className="w-[130px] h-9">
                   <SelectValue placeholder="Status" />
@@ -280,8 +163,8 @@ export default function PodcastsPage() {
 
               {/* Sort */}
               <Select
-                value={filters.sort || "createdAt_desc"}
-                onValueChange={(value) => setFilters({ ...filters, sort: value as Filters["sort"] })}
+                value={sort}
+                onValueChange={(value) => setSort(value as typeof sort)}
               >
                 <SelectTrigger className="w-[150px] h-9">
                   <SelectValue placeholder="Sort by" />
@@ -326,7 +209,7 @@ export default function PodcastsPage() {
           </div>
 
           {/* Podcast List or Empty State for filtered results */}
-          {paginatedPodcasts.length === 0 ? (
+          {podcasts.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-20 rounded-xl border border-dashed border-border/50 bg-card/20">
               <div className="w-12 h-12 rounded-full bg-muted flex items-center justify-center mb-4">
                 <Search className="h-5 w-5 text-muted-foreground" />
@@ -337,17 +220,21 @@ export default function PodcastsPage() {
               <Button
                 variant="ghost"
                 className="mt-4"
-                onClick={() => setFilters({ ...filters, status: "ALL", search: "" })}
+                onClick={() => {
+                  setStatus("ALL");
+                  setSearch("");
+                  setPage(1);
+                }}
               >
                 Clear filters
               </Button>
             </div>
           ) : (
             <PodcastList
-              podcasts={paginatedPodcasts}
+              podcasts={podcasts}
               viewMode={viewMode}
-              currentPage={filters.page || 1}
-              totalPages={totalPages}
+              currentPage={page}
+              totalPages={pagination?.totalPages || 1}
               onPageChange={handlePageChange}
               onPlay={handlePlay}
               onDelete={handleDelete}

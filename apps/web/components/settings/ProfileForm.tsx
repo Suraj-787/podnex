@@ -4,16 +4,16 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { Button } from "@repo/ui/components/button";
-import { Input } from "@repo/ui/components/input";
-import { Label } from "@repo/ui/components/label";
+import { Button } from "@workspace/ui/components/button";
+import { Input } from "@workspace/ui/components/input";
+import { Label } from "@workspace/ui/components/label";
 import {
     Card,
     CardContent,
     CardDescription,
     CardHeader,
     CardTitle,
-} from "@repo/ui/components/card";
+} from "@workspace/ui/components/card";
 import {
     AlertDialog,
     AlertDialogAction,
@@ -24,7 +24,7 @@ import {
     AlertDialogHeader,
     AlertDialogTitle,
     AlertDialogTrigger,
-} from "@repo/ui/components/alert-dialog";
+} from "@workspace/ui/components/alert-dialog";
 import { toast } from "sonner";
 import { Loader2, Trash2 } from "lucide-react";
 

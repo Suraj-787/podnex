@@ -53,6 +53,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
+import { useCreatePodcast } from "@/lib/hooks";
 
 const steps = [
   { id: 1, name: "Content", icon: FileText },
@@ -84,8 +85,8 @@ type CreatePodcastForm = z.infer<typeof createPodcastSchema>;
 export default function NewPodcastPage() {
   const router = useRouter();
   const [step, setStep] = useState(1);
-  const [isSubmitting, setIsSubmitting] = useState(false);
   const [advancedOpen, setAdvancedOpen] = useState(false);
+  const createMutation = useCreatePodcast();
 
   const form = useForm<CreatePodcastForm>({
     resolver: zodResolver(createPodcastSchema),
@@ -141,37 +142,14 @@ export default function NewPodcastPage() {
   };
 
   const onSubmit = async (data: CreatePodcastForm) => {
-    setIsSubmitting(true);
     try {
-      console.log("Creating podcast with data:", data);
-
-      const response = await fetch('/api/podcasts', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(data),
-      });
-
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || error.message || 'Failed to create podcast');
-      }
-
-      const result = await response.json();
-      console.log("Podcast created:", result);
-
-      toast.success("Podcast created successfully!", {
-        description: "Your podcast is being generated. This may take a few minutes.",
-      });
-      router.push("/dashboard/podcasts");
+      const podcast = await createMutation.mutateAsync(data);
+      if (!podcast) return;
+      // Redirect to the newly created podcast detail page
+      router.push(`/dashboard/podcasts/${podcast.id}`);
     } catch (error) {
+      // Error toast is already shown by the mutation
       console.error("Error creating podcast:", error);
-      toast.error("Failed to create podcast", {
-        description: error instanceof Error ? error.message : "Please try again.",
-      });
-    } finally {
-      setIsSubmitting(false);
     }
   };
 
@@ -804,11 +782,11 @@ Tips for best results:
                     </Button>
                     <Button
                       type="submit"
-                      disabled={isSubmitting}
+                      disabled={createMutation.isPending}
                       size="lg"
                       className="px-10 bg-foreground text-background hover:bg-foreground/90"
                     >
-                      {isSubmitting ? (
+                      {createMutation.isPending ? (
                         <>
                           <Wand2 className="h-5 w-5 mr-2 animate-spin" />
                           Creating Podcast...

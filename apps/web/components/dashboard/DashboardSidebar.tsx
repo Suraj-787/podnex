@@ -27,17 +27,18 @@ import {
   DropdownMenuTrigger,
 } from "@workspace/ui/components/dropdown-menu"
 import { Avatar, AvatarFallback, AvatarImage } from "@workspace/ui/components/avatar"
-import { 
-  LayoutDashboard, 
-  Mic, 
-  BarChart2, 
-  Settings, 
+import {
+  LayoutDashboard,
+  Mic,
+  BarChart2,
+  Settings,
   LogOut,
   User,
   ChevronsUpDown,
   Sparkles,
   CreditCard
 } from "lucide-react"
+import { UsageMeter } from "./UsageMeter"
 
 // Menu items
 const items = [
@@ -104,34 +105,15 @@ export function DashboardSidebar() {
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
-        
+
         <SidebarGroup className="group-data-[collapsible=icon]:hidden">
-           <SidebarGroupLabel>Usage</SidebarGroupLabel>
-           <SidebarGroupContent>
-             <div className="px-2 py-2">
-               <div className="bg-muted/50 rounded-lg p-3 text-xs space-y-2">
-                 <div className="flex items-center justify-between font-medium">
-                   <span className="text-foreground">Free Plan</span>
-                   <Link href="/dashboard/settings/subscription" className="text-primary hover:underline flex items-center gap-1">
-                     <Sparkles className="h-3 w-3" />
-                     Upgrade
-                   </Link>
-                 </div>
-                 <div className="space-y-1">
-                    <div className="flex justify-between text-muted-foreground">
-                       <span>Podcasts</span>
-                       <span className="font-medium">0/5</span>
-                    </div>
-                    <div className="h-1.5 w-full bg-secondary rounded-full overflow-hidden">
-                       <div className="h-full bg-primary/80 w-[0%] rounded-full transition-all" />
-                    </div>
-                 </div>
-               </div>
-             </div>
-           </SidebarGroupContent>
+          <SidebarGroupLabel>Usage</SidebarGroupLabel>
+          <SidebarGroupContent>
+            <UsageMeter />
+          </SidebarGroupContent>
         </SidebarGroup>
       </SidebarContent>
-      
+
       <SidebarFooter>
         <SidebarMenu>
           <SidebarMenuItem>
@@ -144,7 +126,7 @@ export function DashboardSidebar() {
                   <Avatar className="h-8 w-8 rounded-lg">
                     <AvatarImage src={session?.user?.image || ""} alt={session?.user?.name || "User"} />
                     <AvatarFallback className="rounded-lg">
-                        {session?.user?.name?.substring(0,2).toUpperCase() || "CN"}
+                      {session?.user?.name?.substring(0, 2).toUpperCase() || "CN"}
                     </AvatarFallback>
                   </Avatar>
                   <div className="grid flex-1 text-left text-sm leading-tight">
@@ -165,7 +147,7 @@ export function DashboardSidebar() {
                     <Avatar className="h-8 w-8 rounded-lg">
                       <AvatarImage src={session?.user?.image || ""} alt={session?.user?.name || ""} />
                       <AvatarFallback className="rounded-lg">
-                        {session?.user?.name?.substring(0,2).toUpperCase() || "CN"}
+                        {session?.user?.name?.substring(0, 2).toUpperCase() || "CN"}
                       </AvatarFallback>
                     </Avatar>
                     <div className="grid flex-1 text-left text-sm leading-tight">
@@ -178,24 +160,24 @@ export function DashboardSidebar() {
                 <DropdownMenuGroup>
                   <DropdownMenuItem asChild>
                     <Link href="/dashboard/settings/subscription">
-                        <Sparkles className="mr-2 size-4" />
-                        Upgrade to Pro
+                      <Sparkles className="mr-2 size-4" />
+                      Upgrade to Pro
                     </Link>
                   </DropdownMenuItem>
                 </DropdownMenuGroup>
                 <DropdownMenuSeparator />
                 <DropdownMenuGroup>
                   <DropdownMenuItem asChild>
-                     <Link href="/dashboard/settings/profile">
-                        <User className="mr-2 size-4" />
-                        Profile
-                     </Link>
+                    <Link href="/dashboard/settings/profile">
+                      <User className="mr-2 size-4" />
+                      Profile
+                    </Link>
                   </DropdownMenuItem>
                   <DropdownMenuItem asChild>
-                     <Link href="/dashboard/settings/billing">
-                        <CreditCard className="mr-2 size-4" />
-                        Billing
-                     </Link>
+                    <Link href="/dashboard/settings/billing">
+                      <CreditCard className="mr-2 size-4" />
+                      Billing
+                    </Link>
                   </DropdownMenuItem>
                 </DropdownMenuGroup>
                 <DropdownMenuSeparator />

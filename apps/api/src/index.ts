@@ -9,6 +9,10 @@ import { errorHandler, notFound } from "./middleware/index.js";
 import userRoutes from "./routes/user.routes.js";
 import podcastRoutes from "./routes/podcast.routes.js";
 import billingRoutes from "./routes/billing.routes.js";
+import apiKeyRoutes from "./routes/api-key.routes.js";
+import webhookRoutes from "./routes/webhook.routes.js";
+import analyticsRoutes from "./routes/analytics.routes.js";
+import adminRoutes from "./routes/admin.routes.js";
 import dotenv from "dotenv";
 import { fileURLToPath } from "url";
 import { dirname, join } from "path";
@@ -64,6 +68,10 @@ app.get("/api/health", (req, res) => {
 app.use("/api/v1/user", userRoutes);
 app.use("/api/v1/podcasts", podcastRoutes);
 app.use("/api/v1/billing", billingRoutes);
+app.use("/api/v1/api-keys", apiKeyRoutes);
+app.use("/api/v1/webhooks", webhookRoutes);
+app.use("/api/v1/analytics", analyticsRoutes);
+app.use("/api/v1/admin", adminRoutes);
 
 // Error handlers (must be last)
 app.use(notFound);

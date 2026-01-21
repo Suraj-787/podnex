@@ -6,33 +6,33 @@ import { Mic, Users, Wand2, Zap, Shield, Globe } from "lucide-react";
 const features = [
   {
     icon: Mic,
-    title: "Voice Cloning",
-    description: "Create authentic voice profiles from just 30 seconds of audio. Preserve nuance, tone, and personality.",
+    title: "AI-Powered Conversations",
+    description: "Transform your notes into natural-sounding podcast conversations between host and guest with realistic dialogue.",
   },
   {
     icon: Users,
-    title: "Multi-Speaker Synthesis",
-    description: "Generate natural conversations between multiple AI voices with dynamic turn-taking and emotional range.",
+    title: "Multiple Voice Options",
+    description: "Choose from 15+ professional AI voices with different personalities and speaking styles for your podcasts.",
   },
   {
     icon: Wand2,
-    title: "Instant Mastering",
-    description: "Studio-quality audio processing. Noise reduction, EQ optimization, and broadcast-ready output.",
+    title: "Instant Generation",
+    description: "Create complete podcast episodes in minutes. Just provide your content and let AI handle the rest.",
   },
   {
     icon: Zap,
-    title: "Real-time Generation",
-    description: "Generate hours of content in minutes. Stream audio directly to your production pipeline.",
+    title: "Flexible Duration",
+    description: "Generate podcasts from 2 to 15 minutes. Perfect for quick updates or in-depth discussions.",
   },
   {
     icon: Shield,
-    title: "Enterprise Security",
-    description: "SOC 2 compliant infrastructure. Your voice data is encrypted and never used for training.",
+    title: "Secure & Private",
+    description: "Your content is encrypted and secure. We never share your data or use it for training purposes.",
   },
   {
     icon: Globe,
-    title: "40+ Languages",
-    description: "Native-quality synthesis across languages. Perfect for global podcast distribution.",
+    title: "API Access",
+    description: "Integrate podcast generation into your workflow with our simple REST API and webhook support.",
   },
 ];
 
@@ -49,17 +49,16 @@ const Features = () => {
           className="max-w-2xl mb-20"
         >
           <span className="text-xs font-light tracking-wider text-muted-foreground uppercase mb-4 block">
-            The Suite
+            Features
           </span>
           <h2 className="font-serif text-4xl md:text-5xl font-medium leading-tight mb-6">
-            Broadcasting thought.
+            Everything you need
             <br />
-            <span className="italic text-slate-light">Engineered.</span>
+            <span className="italic text-slate-light">to create podcasts.</span>
           </h2>
           <p className="text-lg font-light text-muted-foreground leading-relaxed">
-            Every tool designed for creators who demand precision. 
-            From voice synthesis to final master, each feature serves the singular 
-            purpose of elevating your audio.
+            Powerful features designed for content creators, educators, and businesses.
+            Create professional podcasts without recording equipment or editing skills.
           </p>
         </motion.div>
 
@@ -75,8 +74,8 @@ const Features = () => {
               className="group bg-background p-10 hover:bg-surface/50 transition-colors duration-500"
             >
               <div className="mb-6">
-                <feature.icon 
-                  className="w-8 h-8 text-slate-light group-hover:text-foreground transition-colors duration-300" 
+                <feature.icon
+                  className="w-8 h-8 text-slate-light group-hover:text-foreground transition-colors duration-300"
                   strokeWidth={1}
                 />
               </div>

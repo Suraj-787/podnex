@@ -28,8 +28,10 @@ export function usePodcasts(params?: ListPodcastsParams) {
         queryKey: podcastKeys.list(params),
         queryFn: () => podcastsApi.list(params),
         // Auto-refresh every 3 seconds if there are processing podcasts
-        refetchInterval: (data) => {
-            const hasProcessing = data?.podcasts.some(
+        refetchInterval: (query) => {
+            const data = query.state.data;
+            if (!data || !data.podcasts) return false;
+            const hasProcessing = data.podcasts.some(
                 (p) => p.status === "PROCESSING" || p.status === "QUEUED"
             );
             return hasProcessing ? 3000 : false;
@@ -46,7 +48,8 @@ export function usePodcast(id: string) {
         queryFn: () => podcastsApi.get(id),
         enabled: !!id,
         // Auto-refresh every 2 seconds if processing
-        refetchInterval: (data) => {
+        refetchInterval: (query) => {
+            const data = query.state.data;
             return data?.status === "PROCESSING" || data?.status === "QUEUED" ? 2000 : false;
         },
     });
@@ -104,6 +107,7 @@ export function useUpdatePodcast() {
         mutationFn: ({ id, data }: { id: string; data: UpdatePodcastDto }) =>
             podcastsApi.update(id, data),
         onSuccess: (updatedPodcast) => {
+            if (!updatedPodcast) return;
             // Update the podcast in the cache
             queryClient.setQueryData(
                 podcastKeys.detail(updatedPodcast.id),
@@ -150,6 +154,7 @@ export function useRetryPodcast() {
     return useMutation({
         mutationFn: (id: string) => podcastsApi.retry(id),
         onSuccess: (retriedPodcast) => {
+            if (!retriedPodcast) return;
             // Update the podcast in the cache
             queryClient.setQueryData(
                 podcastKeys.detail(retriedPodcast.id),

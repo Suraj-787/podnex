@@ -41,7 +41,7 @@ export function PodcastMetadata({ podcast }: PodcastMetadataProps) {
     {
       icon: Clock,
       label: "Duration",
-      value: formatDuration(podcast.audioDuration),
+      value: formatDuration(podcast.audioDuration ? podcast.audioDuration * 60 : undefined),
     },
     {
       icon: HardDrive,

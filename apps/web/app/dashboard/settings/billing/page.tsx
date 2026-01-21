@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useState, useEffect, useRef } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Button } from "@workspace/ui/components/button";
 import { Card } from "@workspace/ui/components/card";
 import { Progress } from "@workspace/ui/components/progress";
@@ -105,6 +105,9 @@ const PLANS: Plan[] = [
 
 export default function BillingPage() {
     const router = useRouter();
+    const searchParams = useSearchParams();
+    const selectedPlanParam = searchParams.get("plan")?.toUpperCase();
+
     const [currentPlan, setCurrentPlan] = useState<string>("FREE");
     const [billingCycle, setBillingCycle] = useState<"monthly" | "yearly">("monthly");
     const [usage, setUsage] = useState({
@@ -115,11 +118,31 @@ export default function BillingPage() {
     });
     const [loading, setLoading] = useState(false);
     const [upgradingTo, setUpgradingTo] = useState<string | null>(null);
+    const [highlightedPlan, setHighlightedPlan] = useState<string | null>(selectedPlanParam || null);
+
+    const planRefs = useRef<{ [key: string]: HTMLDivElement | null }>({});
 
     useEffect(() => {
         fetchSubscription();
         fetchUsage();
     }, []);
+
+    // Scroll to and highlight the selected plan from query param
+    useEffect(() => {
+        if (selectedPlanParam && planRefs.current[selectedPlanParam]) {
+            setTimeout(() => {
+                planRefs.current[selectedPlanParam]?.scrollIntoView({
+                    behavior: "smooth",
+                    block: "center",
+                });
+            }, 100);
+
+            // Remove highlight after 3 seconds
+            setTimeout(() => {
+                setHighlightedPlan(null);
+            }, 3000);
+        }
+    }, [selectedPlanParam]);
 
     const fetchSubscription = async () => {
         try {
@@ -254,8 +277,8 @@ export default function BillingPage() {
                     <button
                         onClick={() => setBillingCycle("monthly")}
                         className={`px-6 py-2 rounded-md transition-colors ${billingCycle === "monthly"
-                                ? "bg-background shadow-sm"
-                                : "hover:bg-background/50"
+                            ? "bg-background shadow-sm"
+                            : "hover:bg-background/50"
                             }`}
                     >
                         Monthly
@@ -263,8 +286,8 @@ export default function BillingPage() {
                     <button
                         onClick={() => setBillingCycle("yearly")}
                         className={`px-6 py-2 rounded-md transition-colors ${billingCycle === "yearly"
-                                ? "bg-background shadow-sm"
-                                : "hover:bg-background/50"
+                            ? "bg-background shadow-sm"
+                            : "hover:bg-background/50"
                             }`}
                     >
                         Yearly
@@ -282,12 +305,15 @@ export default function BillingPage() {
                     const pricePerMonth = billingCycle === "yearly" ? Math.round(price / 12) : price;
                     const isCurrentPlan = plan.id === currentPlan;
                     const isUpgrading = upgradingTo === plan.id;
+                    const isHighlighted = highlightedPlan === plan.id;
 
                     return (
                         <Card
                             key={plan.id}
-                            className={`relative p-6 ${plan.popular ? "border-2 border-primary" : ""
-                                } ${isCurrentPlan ? "bg-muted/50" : ""}`}
+                            ref={(el) => { planRefs.current[plan.id] = el; }}
+                            className={`relative p-6 transition-all duration-300 ${plan.popular ? "border-2 border-primary" : ""
+                                } ${isCurrentPlan ? "bg-muted/50" : ""} ${isHighlighted ? "ring-4 ring-primary/50 shadow-2xl scale-105" : ""
+                                }`}
                         >
                             {plan.popular && (
                                 <Badge className="absolute -top-3 left-1/2 -translate-x-1/2">

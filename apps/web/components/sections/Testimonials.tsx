@@ -4,22 +4,22 @@ import { motion } from "framer-motion";
 
 const testimonials = [
   {
-    quote: "PodNex has fundamentally changed how we produce content. What used to take weeks now takes hours, with better quality than we ever achieved in-studio.",
-    author: "Sarah Chen",
-    role: "Head of Audio, The Atlantic",
-    avatar: "SC",
+    quote: "PodNex transformed how I create content. I can now generate professional podcasts in minutes instead of hours. The AI voices sound incredibly natural!",
+    author: "Alex Thompson",
+    role: "Content Creator & Educator",
+    avatar: "AT",
   },
   {
-    quote: "The API is a work of art. Clean, predictable, and incredibly powerful. We've built our entire podcast automation pipeline on PodNex.",
-    author: "Marcus Williams",
-    role: "CTO, Podium Media",
-    avatar: "MW",
+    quote: "The API is straightforward and powerful. I integrated PodNex into my workflow in less than an hour. Perfect for automating podcast generation at scale.",
+    author: "Jordan Lee",
+    role: "Developer & Tech Blogger",
+    avatar: "JL",
   },
   {
-    quote: "Voice cloning that actually sounds human. We've tried every solution on the market—nothing comes close to this level of naturalness.",
-    author: "Elena Rodriguez",
-    role: "Executive Producer, NPR",
-    avatar: "ER",
+    quote: "As someone who creates educational content, PodNex has been a game-changer. The quality is impressive and my audience can't tell it's AI-generated.",
+    author: "Maria Garcia",
+    role: "Online Course Instructor",
+    avatar: "MG",
   },
 ];
 

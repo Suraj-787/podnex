@@ -9,7 +9,7 @@ export interface FetchOptions extends RequestInit {
 /**
  * Base fetch wrapper with error handling and common configurations
  */
-async function apiFetch<T>(
+export async function apiFetch<T>(
   endpoint: string,
   options: FetchOptions = {}
 ): Promise<T> {

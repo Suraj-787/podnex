@@ -1,52 +1,28 @@
 "use client"
 
-import { useState, useEffect } from "react";
 import { StatsCard } from "@/components/dashboard/StatsCard";
 import { RecentPodcasts } from "@/components/dashboard/RecentPodcasts";
 import { Button } from "@workspace/ui/components/button";
 import { Mic, Clock, Zap, Plus } from "lucide-react";
 import Link from "next/link";
 import { useSession } from "@/lib/auth-client";
+import { usePodcastStats, useUsage } from "@/lib/hooks";
 
 export default function DashboardPage() {
   const { data: session } = useSession();
   const userName = session?.user?.name || "User";
   const firstName = userName.split(" ")[0];
 
-  const [stats, setStats] = useState({
-    totalPodcasts: 0,
-    totalMinutes: 0,
-    planUsage: 0,
-    monthlyLimit: 5,
-    monthlyUsed: 0,
-  });
-  const [isLoading, setIsLoading] = useState(true);
+  // Fetch real data from backend
+  const { data: stats, isLoading: statsLoading } = usePodcastStats();
+  const { data: usage, isLoading: usageLoading } = useUsage();
 
-  useEffect(() => {
-    const fetchStats = async () => {
-      try {
-        const response = await fetch('/api/podcasts/stats');
-        if (response.ok) {
-          const result = await response.json();
-          // Handle both {data: ...} and direct response
-          const data = result.data || result;
-          setStats({
-            totalPodcasts: data.totalPodcasts || 0,
-            totalMinutes: data.totalMinutes || 0,
-            planUsage: data.planUsage || 0,
-            monthlyLimit: data.monthlyLimit || 5,
-            monthlyUsed: data.monthlyUsed || 0,
-          });
-        }
-      } catch (error) {
-        console.error('Error fetching stats:', error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
+  const isLoading = statsLoading || usageLoading;
 
-    fetchStats();
-  }, []);
+  // Calculate plan usage percentage
+  const planUsagePercent = usage?.subscription
+    ? Math.round((usage.subscription.currentPodcasts / usage.subscription.podcastsLimit) * 100)
+    : 0;
 
   return (
     <div className="space-y-8">
@@ -74,15 +50,19 @@ export default function DashboardPage() {
         />
         <StatsCard
           title="Minutes Generated"
-          value={isLoading ? "..." : `${stats?.totalMinutes || 0}m`}
+          value={isLoading ? "..." : `${Math.round(stats?.totalMinutes || 0)}m`}
           icon={Clock}
           description="Total audio duration"
         />
         <StatsCard
           title="Plan Usage"
-          value={isLoading ? "..." : `${stats?.planUsage || 0}%`}
+          value={isLoading ? "..." : `${planUsagePercent}%`}
           icon={Zap}
-          description={`${stats?.monthlyUsed || 0}/${stats?.monthlyLimit || 5} podcasts this month`}
+          description={
+            usage?.subscription
+              ? `${usage.subscription.currentPodcasts}/${usage.subscription.podcastsLimit} podcasts this month`
+              : "Loading..."
+          }
         />
       </div>
 

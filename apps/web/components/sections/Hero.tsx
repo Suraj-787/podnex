@@ -4,6 +4,7 @@ import { motion } from "framer-motion";
 import { Button } from "@workspace/ui/components/button";
 import { ArrowRight, Play } from "lucide-react";
 import Image from "next/image";
+import Link from "next/link";
 
 const Hero = () => {
   return (
@@ -24,56 +25,42 @@ const Hero = () => {
               transition={{ duration: 0.6, delay: 0.2 }}
               className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-border/50 bg-surface/50 mb-8"
             >
-              <span className="w-2 h-2 rounded-full bg-slate-light animate-pulse" />
+              <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
               <span className="text-xs font-light tracking-wider text-muted-foreground uppercase">
-                Now in Private Beta
+                Now Available
               </span>
             </motion.div>
 
             {/* Headline */}
             <h1 className="font-serif text-5xl md:text-6xl lg:text-7xl font-medium leading-[1.1] tracking-tight mb-6">
-              <span className="text-foreground">The Architecture</span>
+              <span className="text-foreground">Transform Notes</span>
               <br />
-              <span className="text-foreground">of </span>
-              <span className="italic text-slate-light">Conversation</span>
+              <span className="text-foreground">into </span>
+              <span className="italic text-slate-light">Podcasts</span>
             </h1>
 
             {/* Subheadline */}
             <p className="text-lg md:text-xl font-light text-muted-foreground leading-relaxed max-w-lg mb-10">
-              AI-driven podcast creation for visionaries. Voice cloning, 
-              multi-speaker synthesis, and studio-grade mastering—all through 
-              a single, elegant API.
+              Create professional AI-powered podcasts from your notes in minutes.
+              Natural-sounding conversations with multiple voices, perfect for
+              content creators, educators, and businesses.
             </p>
 
             {/* CTA Buttons */}
             <div className="flex flex-col sm:flex-row gap-4">
-              <Button variant="primary" size="lg" className="group">
-                Start Creating
-                <ArrowRight className="ml-2 w-4 h-4 transition-transform group-hover:translate-x-1" />
-              </Button>
-              <Button variant="outline" size="lg" className="group">
-                <Play className="mr-2 w-4 h-4" />
-                Watch Demo
-              </Button>
+              <Link href="/signup">
+                <Button variant="primary" size="lg" className="group w-full sm:w-auto">
+                  Start Creating
+                  <ArrowRight className="ml-2 w-4 h-4 transition-transform group-hover:translate-x-1" />
+                </Button>
+              </Link>
+              <Link href="#how-it-works">
+                <Button variant="outline" size="lg" className="group w-full sm:w-auto">
+                  <Play className="mr-2 w-4 h-4" />
+                  Watch Demo
+                </Button>
+              </Link>
             </div>
-
-            {/* Social Proof */}
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ duration: 0.8, delay: 0.6 }}
-              className="mt-16 pt-8 border-t border-border/30"
-            >
-              <p className="text-xs font-light tracking-wider text-muted-foreground uppercase mb-4">
-                Trusted by leading creators
-              </p>
-              <div className="flex items-center gap-8 opacity-50">
-                <span className="font-serif text-lg">Spotify</span>
-                <span className="font-serif text-lg">Anchor</span>
-                <span className="font-serif text-lg">Gimlet</span>
-                <span className="font-serif text-lg hidden sm:block">Wondery</span>
-              </div>
-            </motion.div>
           </motion.div>
 
           {/* Right Column - Visual */}
@@ -88,7 +75,7 @@ const Hero = () => {
               <div className="absolute inset-0 flex items-center justify-center">
                 <div className="w-[80%] h-[80%] rounded-full bg-muted/10 blur-3xl animate-pulse-slow" />
               </div>
-              
+
               {/* Main image */}
               <motion.div
                 initial={{ opacity: 0 }}

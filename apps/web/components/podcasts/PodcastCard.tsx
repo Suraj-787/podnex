@@ -1,7 +1,9 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import { Podcast, ViewMode } from "@/lib/types/podcast.types";
-import { formatDistanceToNow, formatDuration } from "@/lib/date-utils";
+import { formatDistanceToNow } from "date-fns";
+import { formatDuration } from "@/lib/date-utils";
 import { cn } from "@/lib/utils";
 import { Progress } from "@workspace/ui/components/progress";
 import { Button } from "@workspace/ui/components/button";
@@ -75,6 +77,17 @@ export function PodcastCard({
   onRetry,
   onViewDetails,
 }: PodcastCardProps) {
+  // Force re-render every minute to update relative timestamps
+  const [, setNow] = useState(Date.now());
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setNow(Date.now());
+    }, 60000); // Update every minute
+
+    return () => clearInterval(interval);
+  }, []);
+
   const statusConfig = STATUS_CONFIG[podcast.status as keyof typeof STATUS_CONFIG] || STATUS_CONFIG.QUEUED;
   const StatusIcon = statusConfig.icon;
   const isPlayable = podcast.status === "COMPLETED" && podcast.audioUrl;
@@ -162,7 +175,7 @@ export function PodcastCard({
             {podcast.audioDuration && podcast.status === "COMPLETED" && (
               <div className="inline-flex items-center gap-1 text-muted-foreground/90">
                 <Clock className="h-3.5 w-3.5 flex-shrink-0" />
-                <span className="whitespace-nowrap">{formatDuration(podcast.audioDuration)}</span>
+                <span className="whitespace-nowrap">{formatDuration(podcast.audioDuration * 60)}</span>
               </div>
             )}
 
@@ -280,7 +293,7 @@ export function PodcastCard({
         {podcast.audioDuration && podcast.status === "COMPLETED" && (
           <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-muted text-foreground/80 border border-border/50 shadow-sm">
             <Clock className="h-3.5 w-3.5 flex-shrink-0" />
-            <span className="whitespace-nowrap">{formatDuration(podcast.audioDuration)}</span>
+            <span className="whitespace-nowrap">{formatDuration(podcast.audioDuration * 60)}</span>
           </div>
         )}
       </div>
