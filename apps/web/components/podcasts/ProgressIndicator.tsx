@@ -25,8 +25,9 @@ export function ProgressIndicator({ podcastId }: ProgressIndicatorProps) {
 
   const getCurrentStepInfo = () => {
     for (let i = steps.length - 1; i >= 0; i--) {
-      if (progress >= steps[i].value) {
-        return steps[i];
+      const step = steps[i];
+      if (step && progress >= step.value) {
+        return step;
       }
     }
     return steps[0];
@@ -46,7 +47,7 @@ export function ProgressIndicator({ podcastId }: ProgressIndicatorProps) {
         {/* Progress Bar */}
         <div className="space-y-2">
           <div className="flex items-center justify-between text-sm">
-            <span className="text-muted-foreground">{currentStep || stepInfo.label}</span>
+            <span className="text-muted-foreground">{currentStep || stepInfo?.label || "Initializing..."}</span>
             <span className="font-medium">{Math.round(progress)}%</span>
           </div>
           <Progress value={progress} className="h-2" />
@@ -56,22 +57,22 @@ export function ProgressIndicator({ podcastId }: ProgressIndicatorProps) {
         <div className="space-y-3">
           {steps.map((step, index) => {
             const isComplete = progress > step.value;
-            const isCurrent = progress >= step.value && (index === steps.length - 1 || progress < steps[index + 1].value);
+            const isCurrent = progress >= step.value && (index === steps.length - 1 || progress < (steps[index + 1]?.value ?? Infinity));
 
             return (
               <div key={step.label} className="flex items-center gap-3">
                 <div
                   className={`h-2 w-2 rounded-full transition-colors ${isComplete
-                      ? "bg-green-500"
-                      : isCurrent
-                        ? "bg-blue-500 animate-pulse"
-                        : "bg-muted"
+                    ? "bg-green-500"
+                    : isCurrent
+                      ? "bg-blue-500 animate-pulse"
+                      : "bg-muted"
                     }`}
                 />
                 <span
                   className={`text-sm ${isComplete || isCurrent
-                      ? "text-foreground font-medium"
-                      : "text-muted-foreground"
+                    ? "text-foreground font-medium"
+                    : "text-muted-foreground"
                     }`}
                 >
                   {step.label}
