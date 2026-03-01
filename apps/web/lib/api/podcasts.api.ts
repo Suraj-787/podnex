@@ -1,7 +1,7 @@
 import { api } from "./client";
 import type {
     Podcast,
-    PodcastStatus,
+    PodcastStatusResponse,
     CreatePodcastDto,
     UpdatePodcastDto,
     ListPodcastsParams,
@@ -72,7 +72,7 @@ export const podcastsApi = {
      * Get podcast generation status
      */
     getStatus: async (id: string) => {
-        const response = await api.get<ApiResponse<PodcastStatus>>(
+        const response = await api.get<ApiResponse<PodcastStatusResponse>>(
             `/api/v1/podcasts/${id}/status`
         );
         return response.data;

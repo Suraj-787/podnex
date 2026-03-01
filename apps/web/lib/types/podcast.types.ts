@@ -6,6 +6,13 @@
 export type PodcastStatus = 'QUEUED' | 'PROCESSING' | 'COMPLETED' | 'FAILED';
 export type PodcastDuration = 'SHORT' | 'LONG';
 
+export interface PodcastStatusResponse {
+  status: PodcastStatus;
+  progress: number;
+  currentStep: string;
+}
+
+
 export interface Podcast {
   id: string;
   userId: string;
