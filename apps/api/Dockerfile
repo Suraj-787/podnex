@@ -8,8 +8,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     ca-certificates \
     && rm -rf /var/lib/apt/lists/*
 
-# Install pnpm
-RUN npm install -g pnpm@9
+# Install pnpm and tsx globally
+RUN npm install -g pnpm@9 tsx
 
 WORKDIR /app
 
