@@ -39,8 +39,8 @@ const Integrations = () => {
               <span className="italic text-slate-light">everything.</span>
             </h2>
             <p className="text-lg font-light text-muted-foreground leading-relaxed mb-8">
-              PodNex integrates seamlessly with your existing workflow. 
-              Publish directly to major platforms, sync with your tools, 
+              PodNex integrates seamlessly with your existing workflow.
+              Publish directly to major platforms, sync with your tools,
               and automate your entire podcast pipeline.
             </p>
 
@@ -51,7 +51,7 @@ const Integrations = () => {
                     key={i}
                     className="w-10 h-10 rounded-full bg-surface border-2 border-background flex items-center justify-center"
                   >
-                    <span className="text-xs text-muted-foreground">{integrations[i].name.charAt(0)}</span>
+                    <span className="text-xs text-muted-foreground">{integrations[i]?.name.charAt(0)}</span>
                   </div>
                 ))}
               </div>
