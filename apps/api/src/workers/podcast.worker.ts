@@ -1,5 +1,4 @@
 import { Worker, Job } from "bullmq";
-import { redis } from "@repo/redis";
 import { prisma } from "@repo/database";
 import type { PodcastJobData } from "../services/queue.service.js";
 import { SubscriptionService } from "../services/subscription.service.js";
@@ -8,6 +7,11 @@ import { AudioGeneratorService } from "../services/audio-generator.service.js";
 import { AudioCombinerService } from "../services/audio-combiner.service.js";
 import { StorageService } from "../services/storage.service.js";
 import { WebhookService } from "../services/webhook.service.js";
+
+// Prevent Redis/BullMQ errors from crashing the entire process
+process.on("unhandledRejection", (reason) => {
+    console.error("⚠️  Unhandled promise rejection (worker):", reason);
+});
 
 async function processPodcastJob(job: Job<PodcastJobData>) {
     const { podcastId, userId, noteContent, duration, hostVoice, guestVoice, ttsProvider } = job.data;
@@ -170,21 +174,32 @@ async function updateProgress(
 }
 
 
-// Get connection config from Redis instance
-const connectionConfig = {
-    host: redis.options.host,
-    port: redis.options.port,
-    password: redis.options.password,
-    db: redis.options.db,
-};
+// Build BullMQ connection config from REDIS_URL, preserving TLS for rediss://
+const rawUrl = process.env.REDIS_URL || "redis://localhost:6379";
+let workerConnection: Record<string, unknown>;
+try {
+    const parsed = new URL(rawUrl);
+    workerConnection = {
+        host: parsed.hostname,
+        port: parseInt(parsed.port || "6379"),
+        password: parsed.password ? decodeURIComponent(parsed.password) : undefined,
+        username: parsed.username ? decodeURIComponent(parsed.username) : undefined,
+        tls: rawUrl.startsWith("rediss://") ? {} : undefined,
+        maxRetriesPerRequest: null,  // Required for BullMQ
+        enableReadyCheck: false,
+        retryStrategy: (times: number) => times > 10 ? null : Math.min(times * 500, 30000),
+    };
+} catch {
+    workerConnection = { host: "localhost", port: 6379, maxRetriesPerRequest: null };
+}
 
 // Create worker
 export const podcastWorker = new Worker<PodcastJobData>(
     "podcast-generation",
     processPodcastJob,
     {
-        connection: connectionConfig,
-        concurrency: 2, // Process 2 jobs simultaneously to avoid connection pool exhaustion
+        connection: workerConnection,
+        concurrency: 1,
         removeOnComplete: { count: 100 },
         removeOnFail: { count: 500 },
     }

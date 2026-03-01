@@ -1,5 +1,4 @@
 import { Queue, Worker, Job } from "bullmq";
-import { redis } from "@repo/redis";
 
 export interface PodcastJobData {
     podcastId: string;
@@ -13,13 +12,25 @@ export interface PodcastJobData {
 
 const QUEUE_NAME = "podcast-generation";
 
-// Get connection config from Redis instance
-const connectionConfig = {
-    host: redis.options.host,
-    port: redis.options.port,
-    password: redis.options.password,
-    db: redis.options.db,
-};
+// Build BullMQ connection config from REDIS_URL, preserving TLS for rediss://
+const rawUrl = process.env.REDIS_URL || "redis://localhost:6379";
+let connectionConfig: Record<string, unknown>;
+try {
+    const parsed = new URL(rawUrl);
+    connectionConfig = {
+        host: parsed.hostname,
+        port: parseInt(parsed.port || "6379"),
+        password: parsed.password ? decodeURIComponent(parsed.password) : undefined,
+        username: parsed.username ? decodeURIComponent(parsed.username) : undefined,
+        tls: rawUrl.startsWith("rediss://") ? {} : undefined,
+        maxRetriesPerRequest: null,
+        enableReadyCheck: false,
+        retryStrategy: (times: number) => times > 10 ? null : Math.min(times * 500, 30000),
+    };
+} catch {
+    connectionConfig = { host: "localhost", port: 6379, maxRetriesPerRequest: null };
+}
+
 
 export const podcastQueue = new Queue<PodcastJobData>(QUEUE_NAME, {
     connection: connectionConfig,
