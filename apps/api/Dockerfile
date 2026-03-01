@@ -34,5 +34,5 @@ EXPOSE 3001
 
 ENV NODE_ENV=production
 
-# Run TypeScript directly via tsx (avoids cross-package compilation issues)
-CMD ["node_modules/.bin/tsx", "apps/api/src/index.ts"]
+# Run TypeScript directly via globally installed tsx
+CMD ["tsx", "apps/api/src/index.ts"]
