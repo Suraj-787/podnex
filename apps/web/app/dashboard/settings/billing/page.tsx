@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { Suspense, useState, useEffect, useRef } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Button } from "@workspace/ui/components/button";
 import { Card } from "@workspace/ui/components/card";
@@ -103,7 +103,7 @@ const PLANS: Plan[] = [
     },
 ];
 
-export default function BillingPage() {
+function BillingContent() {
     const router = useRouter();
     const searchParams = useSearchParams();
     const selectedPlanParam = searchParams.get("plan")?.toUpperCase();
@@ -395,5 +395,13 @@ export default function BillingPage() {
                 </Card>
             )}
         </div>
+    );
+}
+
+export default function BillingPage() {
+    return (
+        <Suspense fallback={<div className="container mx-auto p-6"><div className="animate-pulse h-8 bg-muted rounded w-48 mb-4" /></div>}>
+            <BillingContent />
+        </Suspense>
     );
 }
