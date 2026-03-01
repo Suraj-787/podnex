@@ -12,16 +12,52 @@ interface GeneratedScript {
     estimatedDuration: number;
 }
 
+interface VoiceConfig {
+    hostVoice?: string;
+    guestVoice?: string;
+}
+
+// Map voice names to gender
+const FEMALE_VOICES = new Set([
+    "Autumn", "Melody", "Hannah", "Emily", "Ivy",
+    "Kaitlyn", "Luna", "Willow", "Lauren", "Sierra",
+    // Style aliases that map to female voices
+    "default", "professional", "casual", "authoritative", "host",
+]);
+
+const MALE_VOICES = new Set([
+    "Noah", "Jasper", "Caleb", "Ronan", "Ethan", "Daniel", "Zane",
+    // Style aliases that map to male voices
+    "energetic", "thoughtful", "curious", "guest",
+]);
+
+function getVoiceGender(voice: string): "female" | "male" {
+    if (FEMALE_VOICES.has(voice)) return "female";
+    if (MALE_VOICES.has(voice)) return "male";
+    // Default: assume female for host, male for guest
+    return "female";
+}
+
+// Gender-appropriate name pools
+const FEMALE_NAMES = ["Sarah", "Emma", "Rachel", "Jessica", "Olivia", "Sophia", "Ava", "Natalie"];
+const MALE_NAMES = ["James", "Michael", "David", "Alex", "Ryan", "Chris", "Daniel", "Ethan"];
+
+function pickName(gender: "female" | "male"): string {
+    const pool = gender === "female" ? FEMALE_NAMES : MALE_NAMES;
+    return pool[Math.floor(Math.random() * pool.length)] ?? (gender === "female" ? "Sarah" : "James");
+}
+
 export class ScriptGeneratorService {
     /**
      * Generate a podcast script from note content
      */
     static async generate(
         noteContent: string,
-        duration: PodcastDuration
+        duration: PodcastDuration,
+        voiceConfig?: VoiceConfig
     ): Promise<GeneratedScript> {
         try {
-            const prompt = this.buildPrompt(noteContent, duration);
+            const prompt = this.buildPrompt(noteContent, duration, voiceConfig);
 
             const { text } = await generateText({
                 model: openai("gpt-4-turbo"),
@@ -46,20 +82,41 @@ export class ScriptGeneratorService {
      */
     private static buildPrompt(
         noteContent: string,
-        duration: PodcastDuration
+        duration: PodcastDuration,
+        voiceConfig?: VoiceConfig
     ): string {
         const targetLength = this.getTargetLength(duration);
+
+        // Determine genders from voice names
+        const hostGender = getVoiceGender(voiceConfig?.hostVoice ?? "host");
+        const guestGender = getVoiceGender(voiceConfig?.guestVoice ?? "guest");
+
+        // Pick gender-consistent names
+        const hostName = pickName(hostGender);
+        const guestName = pickName(guestGender);
 
         return `You are a podcast script writer. Create an engaging, natural conversation between a host and a guest based on the following content.
 
 CONTENT:
 ${noteContent}
 
+HOST DETAILS:
+- Name: ${hostName}
+- Gender: ${hostGender}
+- Role: Podcast host / interviewer
+
+GUEST DETAILS:
+- Name: ${guestName}
+- Gender: ${guestGender}
+- Role: Expert guest / interviewee
+
 REQUIREMENTS:
 - Target length: ${targetLength} words (for ${duration} duration)
 - Format: Alternating between HOST and GUEST
 - Style: Conversational, engaging, natural
 - Include: Opening greeting, main discussion, closing remarks
+- The host should introduce themselves as ${hostName} and the guest as ${guestName}
+- Use ${hostGender === "female" ? "she/her" : "he/him"} pronouns for the host and ${guestGender === "female" ? "she/her" : "he/him"} pronouns for the guest
 - Avoid: Overly formal language, jargon without explanation
 - Make it sound like a real conversation with natural transitions
 
@@ -87,19 +144,12 @@ Generate the script now:`;
             const guestMatch = line.match(/^GUEST:\s*(.+)$/i);
 
             if (hostMatch && hostMatch[1]) {
-                segments.push({
-                    speaker: "host",
-                    text: hostMatch[1].trim(),
-                });
+                segments.push({ speaker: "host", text: hostMatch[1].trim() });
             } else if (guestMatch && guestMatch[1]) {
-                segments.push({
-                    speaker: "guest",
-                    text: guestMatch[1].trim(),
-                });
+                segments.push({ speaker: "guest", text: guestMatch[1].trim() });
             }
         }
 
-        // Ensure we have at least some segments
         if (segments.length === 0) {
             throw new Error("Failed to parse script - no valid segments found");
         }
@@ -116,9 +166,8 @@ Generate the script now:`;
             return sum + segment.text.split(/\s+/).length;
         }, 0);
 
-        // 150 words per minute, plus pauses between segments
         const speakingTime = (totalWords / 150) * 60;
-        const pauseTime = segments.length * 0.5; // 0.5s pause between segments
+        const pauseTime = segments.length * 0.5;
 
         return Math.round(speakingTime + pauseTime);
     }
@@ -128,12 +177,9 @@ Generate the script now:`;
      */
     private static getTargetLength(duration: PodcastDuration): string {
         switch (duration) {
-            case "SHORT":
-                return "800-1000"; // ~5-7 minutes
-            case "LONG":
-                return "3000-4000"; // ~20-30 minutes
-            default:
-                return "1000-1500";
+            case "SHORT": return "800-1000";
+            case "LONG": return "3000-4000";
+            default: return "1000-1500";
         }
     }
 }

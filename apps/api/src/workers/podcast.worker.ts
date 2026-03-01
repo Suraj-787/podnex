@@ -29,7 +29,7 @@ async function processPodcastJob(job: Job<PodcastJobData>) {
         // Step 1: Generate script (0-25%)
         await job.updateProgress(10);
         await updateProgress(podcastId, 10, "PROCESSING", "Generating script");
-        const script = await ScriptGeneratorService.generate(noteContent, duration);
+        const script = await ScriptGeneratorService.generate(noteContent, duration, { hostVoice, guestVoice });
 
         await job.updateProgress(25);
         await updateProgress(podcastId, 25, "PROCESSING", "Script generated");
