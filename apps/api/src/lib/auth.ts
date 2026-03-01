@@ -15,19 +15,27 @@ export const auth = betterAuth({
     .map((o) => o.trim())
     .filter(Boolean),
 
+  // Required for cross-domain cookies (frontend on Vercel, API on EC2)
+  advanced: {
+    defaultCookieAttributes: {
+      sameSite: "none" as const,
+      secure: true,
+      httpOnly: true,
+      path: "/",
+    },
+  },
+
   emailAndPassword: {
     enabled: true,
-    requireEmailVerification: false, // Set to true in production
+    requireEmailVerification: false,
   },
 
   hooks: {
     after: createAuthMiddleware(async (ctx) => {
-      // Check if this is a sign-up endpoint
       if (ctx.path.startsWith("/sign-up")) {
         const newSession = ctx.context.newSession;
 
         if (newSession) {
-          // Create default FREE subscription for new user
           try {
             const nextMonth = new Date();
             nextMonth.setMonth(nextMonth.getMonth() + 1);
@@ -37,7 +45,6 @@ export const auth = betterAuth({
                 userId: newSession.user.id,
                 plan: "FREE",
                 status: "ACTIVE",
-                // Set default limits
                 monthlyPodcastLimit: 5,
                 monthlyMinutesLimit: 25,
                 usageResetDate: nextMonth,
