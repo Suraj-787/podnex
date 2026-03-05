@@ -146,7 +146,10 @@ function BillingContent() {
 
     const fetchSubscription = async () => {
         try {
-            const response = await fetch("/api/user/subscription");
+            const response = await fetch(
+                `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/v1/user/subscription`,
+                { credentials: "include" }
+            );
             if (response.ok) {
                 const data = await response.json();
                 setCurrentPlan(data.data.plan || "FREE");
@@ -158,7 +161,10 @@ function BillingContent() {
 
     const fetchUsage = async () => {
         try {
-            const response = await fetch("/api/user/usage");
+            const response = await fetch(
+                `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/v1/user/usage`,
+                { credentials: "include" }
+            );
             if (response.ok) {
                 const data = await response.json();
                 setUsage({
@@ -188,14 +194,15 @@ function BillingContent() {
         setLoading(true);
 
         try {
-            const response = await fetch("/api/billing/create-checkout", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                    plan: plan.id,
-                    billingCycle,
-                }),
-            });
+            const response = await fetch(
+                `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/v1/billing/create-checkout`,
+                {
+                    method: "POST",
+                    credentials: "include",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ plan: plan.id, billingCycle }),
+                }
+            );
 
             if (!response.ok) {
                 throw new Error("Failed to create checkout session");
