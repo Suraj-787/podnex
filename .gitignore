@@ -80,3 +80,6 @@ prisma/migrations/*_migration.sql
 
 # Redis dump
 dump.rdb
+
+
+other

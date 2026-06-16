@@ -3,28 +3,27 @@
 import { motion } from "framer-motion";
 import { Copy, Check } from "lucide-react";
 import { useState } from "react";
+import Link from "next/link";
 import { Button } from "@workspace/ui/components/button";
 
-const codeSnippet = `import { PodNex } from '@podnex/sdk';
-
-const client = new PodNex({ apiKey: process.env.PODNEX_API_KEY });
-
-// Generate a podcast episode
-const episode = await client.episodes.create({
-  title: "The Future of AI",
-  voices: ["alex_calm", "sarah_conversational"],
-  script: [
-    { speaker: "alex", text: "Welcome to the show..." },
-    { speaker: "sarah", text: "Thanks for having me..." }
-  ],
-  mastering: {
-    loudness: -16,
-    format: "mp3",
-    quality: "broadcast"
-  }
+const codeSnippet = `let response;
+response = await fetch('https://api.podnex.app/v1/podcasts', {
+  method: 'POST',
+  headers: {
+    'Authorization': \`Bearer \${process.env.PODNEX_API_KEY}\`,
+    'Content-Type': 'application/json'
+  },
+  body: JSON.stringify({
+    title: "The Future of AI",
+    duration: "SHORT", // SHORT (3-5 min) or LONG (8-10 min)
+    hostVoice: "Sierra",
+    guestVoice: "Daniel"
+  })
 });
 
-console.log(episode.audioUrl);`;
+let podcast;
+podcast = await response.json();
+console.log(podcast.audioUrl);`;
 
 const APISection = () => {
   const [copied, setCopied] = useState(false);
@@ -64,9 +63,9 @@ const APISection = () => {
               <div className="flex items-start gap-4">
                 <div className="w-px h-full bg-border" />
                 <div>
-                  <h4 className="font-serif text-lg mb-1 text-foreground">RESTful & SDK</h4>
+                  <h4 className="font-serif text-lg mb-1 text-foreground">RESTful API</h4>
                   <p className="text-sm font-light text-muted-foreground">
-                    TypeScript, Python, and Go SDKs with full type safety.
+                    Authenticate with an API key and generate episodes with simple HTTP calls.
                   </p>
                 </div>
               </div>
@@ -75,24 +74,17 @@ const APISection = () => {
                 <div>
                   <h4 className="font-serif text-lg mb-1 text-foreground">Webhooks</h4>
                   <p className="text-sm font-light text-muted-foreground">
-                    Real-time notifications for async generation workflows.
-                  </p>
-                </div>
-              </div>
-              <div className="flex items-start gap-4">
-                <div className="w-px h-full bg-border" />
-                <div>
-                  <h4 className="font-serif text-lg mb-1 text-foreground">99.9% Uptime SLA</h4>
-                  <p className="text-sm font-light text-muted-foreground">
-                    Enterprise-grade reliability for production workloads.
+                    Get notified when an episode finishes generating.
                   </p>
                 </div>
               </div>
             </div>
 
-            <Button variant="outline" size="lg">
-              Read Documentation
-            </Button>
+            <Link href="/dashboard/settings/api-keys">
+              <Button variant="outline" size="lg">
+                Get API Access
+              </Button>
+            </Link>
           </motion.div>
 
           {/* Right Column - Code Block */}

@@ -22,7 +22,7 @@ const features = [
   {
     icon: Zap,
     title: "Flexible Duration",
-    description: "Generate podcasts from 2 to 15 minutes. Perfect for quick updates or in-depth discussions.",
+    description: "Choose a short 3-5 minute episode for quick updates or a longer 8-10 minute episode for in-depth discussions.",
   },
   {
     icon: Shield,

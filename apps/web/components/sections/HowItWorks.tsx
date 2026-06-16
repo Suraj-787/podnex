@@ -14,25 +14,25 @@ const steps = [
     number: "02",
     icon: Mic,
     title: "Choose Voices",
-    description: "Select from 100+ premium voices or clone your own. Assign speakers with emotional direction.",
+    description: "Pick a host and guest voice from our library of natural-sounding AI voices.",
   },
   {
     number: "03",
     icon: Headphones,
     title: "Generate & Master",
-    description: "AI synthesizes natural dialogue and applies broadcast-ready mastering in minutes.",
+    description: "AI synthesizes the dialogue and applies loudness-normalized audio mastering in minutes.",
   },
   {
     number: "04",
     icon: Share2,
-    title: "Publish Anywhere",
-    description: "Export in any format. Direct integrations with Spotify, Apple Podcasts, and more.",
+    title: "Download & Share",
+    description: "Download your finished episode as an MP3, ready to publish wherever you like.",
   },
 ];
 
 const HowItWorks = () => {
   return (
-    <section className="py-32 relative bg-surface/20">
+    <section id="how-it-works" className="py-32 relative bg-surface/20">
       <div className="container mx-auto">
         {/* Section Header */}
         <motion.div

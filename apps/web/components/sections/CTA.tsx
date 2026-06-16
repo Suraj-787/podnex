@@ -30,8 +30,8 @@ const CTA = () => {
           </h2>
 
           <p className="text-xl font-light text-muted-foreground leading-relaxed max-w-2xl mx-auto mb-12">
-            Join content creators, educators, and businesses who are using
-            PodNex to transform their ideas into engaging podcast conversations.
+            Turn your notes into engaging podcast conversations in minutes—built
+            for content creators, educators, and businesses.
           </p>
 
           <div className="flex flex-col sm:flex-row gap-4 justify-center">

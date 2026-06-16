@@ -5,10 +5,10 @@ import { Play, Pause } from "lucide-react";
 import { useState } from "react";
 
 const voices = [
-  { name: "Alex", style: "Calm & Authoritative", accent: "American", duration: "0:12" },
-  { name: "Sarah", style: "Warm & Conversational", accent: "British", duration: "0:15" },
-  { name: "Marcus", style: "Dynamic & Energetic", accent: "Australian", duration: "0:10" },
-  { name: "Elena", style: "Elegant & Professional", accent: "European", duration: "0:14" },
+  { name: "Hannah", style: "Professional & Clear", accent: "American" },
+  { name: "Melody", style: "Warm & Conversational", accent: "American" },
+  { name: "Noah", style: "Dynamic & Energetic", accent: "American" },
+  { name: "Ethan", style: "Thoughtful & Measured", accent: "American" },
 ];
 
 const VoiceFoundry = () => {
@@ -53,11 +53,6 @@ const VoiceFoundry = () => {
                   </p>
                 </div>
 
-                {/* Duration */}
-                <span className="text-xs font-light text-muted-foreground">
-                  {voice.duration}
-                </span>
-
                 {/* Waveform visualization */}
                 <div className="flex items-center gap-0.5 h-8">
                   {[...Array(12)].map((_, i) => (
@@ -94,34 +89,21 @@ const VoiceFoundry = () => {
               <span className="italic text-slate-light">resonate.</span>
             </h2>
             <p className="text-lg font-light text-muted-foreground leading-relaxed mb-8">
-              Our neural voice models capture the subtle nuances of human speech—breath, 
-              cadence, emotional inflection. Each voice is trained on thousands of hours 
-              of professional recordings.
+              Natural-sounding AI voices for your host and guest, so conversations
+              feel like real dialogue instead of robotic narration.
             </p>
 
             <div className="grid grid-cols-2 gap-8">
               <div>
-                <span className="font-serif text-4xl text-foreground">100+</span>
+                <span className="font-serif text-4xl text-foreground">17+</span>
                 <p className="text-sm font-light text-muted-foreground mt-1">
-                  Premium voice models
+                  Professional voices
                 </p>
               </div>
               <div>
-                <span className="font-serif text-4xl text-foreground">40+</span>
+                <span className="font-serif text-4xl text-foreground">2</span>
                 <p className="text-sm font-light text-muted-foreground mt-1">
-                  Languages supported
-                </p>
-              </div>
-              <div>
-                <span className="font-serif text-4xl text-foreground">30s</span>
-                <p className="text-sm font-light text-muted-foreground mt-1">
-                  To clone any voice
-                </p>
-              </div>
-              <div>
-                <span className="font-serif text-4xl text-foreground">99%</span>
-                <p className="text-sm font-light text-muted-foreground mt-1">
-                  Natural speech rating
+                  Episode lengths: short & long
                 </p>
               </div>
             </div>

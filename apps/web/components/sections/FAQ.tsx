@@ -27,7 +27,7 @@ const faqs = [
   },
   {
     question: "Do you offer an API?",
-    answer: "Yes! Pro plan subscribers get full API access with webhook support. This allows you to integrate podcast generation directly into your applications and workflows. Check our documentation for implementation details.",
+    answer: "Yes! Starter plan and above get API access, with webhook support on the Pro plan. Generate an API key from your account settings to integrate podcast generation into your own applications and workflows.",
   },
   {
     question: "What if I'm not satisfied with the result?",

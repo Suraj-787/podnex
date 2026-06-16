@@ -57,7 +57,7 @@ const Hero = () => {
               <Link href="#how-it-works">
                 <Button variant="outline" size="lg" className="group w-full sm:w-auto">
                   <Play className="mr-2 w-4 h-4" />
-                  Watch Demo
+                  See How It Works
                 </Button>
               </Link>
             </div>
