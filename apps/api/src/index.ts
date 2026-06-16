@@ -21,7 +21,8 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
 // Load .env from apps/api directory FIRST
-dotenv.config({ path: join(__dirname, "../.env") });
+// override: true ensures this always wins over stale vars exported in the shell profile
+dotenv.config({ path: join(__dirname, "../.env"), override: true });
 
 // Debug: Log environment variable loading
 console.log("🔧 Environment variables loaded:");

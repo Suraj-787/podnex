@@ -9,7 +9,8 @@ const envPath = join(__dirname, "../../.env");
 console.log("📁 Loading .env from:", envPath);
 
 // Load .env file IMMEDIATELY
-const result = dotenv.config({ path: envPath });
+// override: true ensures this always wins over stale vars exported in the shell profile
+const result = dotenv.config({ path: envPath, override: true });
 
 if (result.error) {
     console.error("❌ Error loading .env:", result.error);

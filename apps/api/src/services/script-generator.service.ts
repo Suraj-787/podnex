@@ -1,6 +1,20 @@
 import { openai } from "@ai-sdk/openai";
+import { createGoogleGenerativeAI } from "@ai-sdk/google";
 import { generateText } from "ai";
+import type { LanguageModel } from "ai";
 import type { PodcastDuration } from "@repo/database";
+
+const google = createGoogleGenerativeAI({ apiKey: process.env.GEMINI_API_KEY });
+
+function getModel(): LanguageModel {
+    const provider = process.env.SCRIPT_PROVIDER || "openai";
+
+    if (provider === "gemini") {
+        return google("gemini-2.5-flash");
+    }
+
+    return openai("gpt-4-turbo");
+}
 
 interface ScriptSegment {
     speaker: "host" | "guest";
@@ -60,7 +74,7 @@ export class ScriptGeneratorService {
             const prompt = this.buildPrompt(noteContent, duration, voiceConfig);
 
             const { text } = await generateText({
-                model: openai("gpt-4-turbo"),
+                model: getModel(),
                 prompt,
                 temperature: 0.7,
             });
@@ -78,7 +92,7 @@ export class ScriptGeneratorService {
     }
 
     /**
-     * Build the prompt for OpenAI
+     * Build the prompt sent to the script-generation model
      */
     private static buildPrompt(
         noteContent: string,
