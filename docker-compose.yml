@@ -1,0 +1,28 @@
+services:
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    volumes:
+      - redis-data:/data
+    networks:
+      - podnex
+
+  api:
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+    restart: unless-stopped
+    depends_on:
+      - redis
+    env_file:
+      - apps/api/.env
+    ports:
+      - "127.0.0.1:3001:3001"
+    networks:
+      - podnex
+
+networks:
+  podnex:
+
+volumes:
+  redis-data:

@@ -1,0 +1,42 @@
+# Applies repo-wide since docker-compose.yml builds with context: .
+
+# Dependencies
+node_modules
+**/node_modules
+
+# Build artifacts
+dist
+build
+.turbo
+.next
+
+# Environment files (never bake into image)
+.env
+.env.*
+!.env.example
+
+# Git & editor
+.git
+.gitignore
+.vscode
+.idea
+
+# OS artifacts
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+npm-debug.log*
+
+# Test files
+**/*.test.ts
+**/*.spec.ts
+coverage
+
+# Docs
+*.md
+
+# Misc project scratch not needed at build time
+other
+docs
