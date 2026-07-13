@@ -50,9 +50,18 @@ const UNREAL_VOICE_MAP: Record<string, string> = {
     Zane: "Zane",
 };
 
+// Unreal Speech hard-caps requests at 1000 characters; a single HOST/GUEST
+// turn from the generated script can exceed that. Kept a bit under the limit
+// as a safety margin, and applied to all providers for consistent chunking.
+const MAX_TTS_CHARS = 950;
+
 export class AudioGeneratorService {
     /**
-     * Generate audio for all script segments
+     * Generate audio for all script segments. Segments longer than the TTS
+     * provider's request limit are split into multiple chunks first — the
+     * resulting audio buffers stay in order, so AudioCombinerService.combine
+     * (which just concatenates whatever flat list it's given) reassembles
+     * them correctly without needing to know a split happened.
      */
     static async generateAll(
         segments: ScriptSegment[],
@@ -66,16 +75,75 @@ export class AudioGeneratorService {
                     ? voiceConfig.hostVoice
                     : voiceConfig.guestVoice;
 
-            const audio = await this.generateSegment(
-                segment.text,
-                voice,
-                voiceConfig.ttsProvider
-            );
-
-            audioSegments.push(audio);
+            const chunks = this.splitText(segment.text, MAX_TTS_CHARS);
+            for (const chunk of chunks) {
+                const audio = await this.generateSegment(
+                    chunk,
+                    voice,
+                    voiceConfig.ttsProvider
+                );
+                audioSegments.push(audio);
+            }
         }
 
         return audioSegments;
+    }
+
+    /**
+     * Split text into TTS-safe chunks, preferring sentence boundaries. Falls
+     * back to word boundaries for the rare single sentence longer than maxLength.
+     */
+    private static splitText(text: string, maxLength: number): string[] {
+        if (text.length <= maxLength) return [text];
+
+        const sentences = text.match(/[^.!?]+[.!?]+(\s|$)|[^.!?]+$/g) ?? [text];
+        const chunks: string[] = [];
+        let current = "";
+
+        for (const sentence of sentences) {
+            if (sentence.length > maxLength) {
+                if (current.trim()) {
+                    chunks.push(current.trim());
+                    current = "";
+                }
+                const words = sentence.split(/\s+/);
+                let wordChunk = "";
+                for (const word of words) {
+                    // Defensive: a single "word" longer than maxLength (e.g. a
+                    // long URL with no spaces) can't be split on word
+                    // boundaries — fall back to a hard character slice.
+                    if (word.length > maxLength) {
+                        if (wordChunk.trim()) {
+                            chunks.push(wordChunk.trim());
+                            wordChunk = "";
+                        }
+                        for (let i = 0; i < word.length; i += maxLength) {
+                            chunks.push(word.slice(i, i + maxLength));
+                        }
+                        continue;
+                    }
+                    const candidate = (wordChunk + " " + word).trim();
+                    if (candidate.length > maxLength) {
+                        if (wordChunk.trim()) chunks.push(wordChunk.trim());
+                        wordChunk = word;
+                    } else {
+                        wordChunk = candidate;
+                    }
+                }
+                if (wordChunk.trim()) chunks.push(wordChunk.trim());
+                continue;
+            }
+
+            if ((current + sentence).length > maxLength) {
+                chunks.push(current.trim());
+                current = sentence;
+            } else {
+                current += sentence;
+            }
+        }
+
+        if (current.trim()) chunks.push(current.trim());
+        return chunks;
     }
 
     /**
