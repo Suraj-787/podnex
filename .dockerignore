@@ -10,10 +10,14 @@ build
 .turbo
 .next
 
-# Environment files (never bake into image)
-.env
-.env.*
-!.env.example
+# Environment files (never bake into image). MUST use **/ — unlike
+# .gitignore, a bare pattern here only matches the context root, not nested
+# paths like apps/api/.env or packages/database/.env (which is exactly what
+# COPY apps/api ./apps/api and COPY packages/database ./packages/database
+# pull in wholesale — a bare ".env" pattern silently let both through).
+**/.env
+**/.env.*
+!**/.env.example
 
 # Git & editor
 .git
