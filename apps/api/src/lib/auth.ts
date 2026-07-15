@@ -35,6 +35,18 @@ export const auth = betterAuth({
 
   socialProviders,
 
+  // The OAuth state cookie set during signIn.social() is written via a
+  // cross-origin fetch() (frontend on Vercel, API on EC2) — browsers with
+  // third-party cookie blocking (Chrome's default as of this deployment,
+  // not just Safari/Firefox) never store it, since it's set outside a
+  // top-level navigation to this domain. The state token itself is still
+  // verified against a random 32-char value stored server-side in the
+  // Verification table, so this only removes a redundant secondary check,
+  // not the actual CSRF protection.
+  account: {
+    skipStateCookieCheck: true,
+  },
+
   // Required for cross-domain cookies (frontend on Vercel, API on EC2)
   advanced: {
     defaultCookieAttributes: {
