@@ -60,6 +60,14 @@ app.use(
   })
 );
 
+// Temporary diagnostic for social sign-in state_mismatch investigation
+app.all("/api/auth/callback/*", (req, res, next) => {
+  console.log(`🔍 OAuth callback: ${req.method} ${req.originalUrl}`);
+  console.log(`   Cookie header present: ${req.headers.cookie ? "yes" : "NO"}`);
+  console.log(`   Cookie header raw: ${req.headers.cookie || "(none)"}`);
+  next();
+});
+
 // Better Auth handler - MUST come before express.json()
 app.all("/api/auth/*", toNodeHandler(auth));
 
