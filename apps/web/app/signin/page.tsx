@@ -5,6 +5,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { signIn } from "@/lib/auth-client";
+import { SocialAuthButtons } from "@/components/auth/social-auth-buttons";
 import { Button } from "@workspace/ui/components/button";
 import {
   Form,
@@ -92,6 +93,7 @@ export default function SignInPage() {
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
+            <SocialAuthButtons isLoading={isLoading} setIsLoading={setIsLoading} />
             <Form {...form}>
               <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
                 <FormField
