@@ -37,9 +37,13 @@ export function SocialAuthButtons({ isLoading, setIsLoading }: SocialAuthButtons
   async function handleSocialSignIn(provider: "google" | "github") {
     setIsLoading(true);
     try {
+      // Must be absolute: after Google/GitHub redirect back, Better Auth's
+      // callback handler resolves this URL against api.podnex.tech (the
+      // origin the browser is actually on at that point), not the frontend
+      // — a relative "/dashboard" would 404 against the API instead.
       await signIn.social({
         provider,
-        callbackURL: "/dashboard",
+        callbackURL: `${window.location.origin}/dashboard`,
       });
     } catch (error) {
       toast.error("An error occurred");
