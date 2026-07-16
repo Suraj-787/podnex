@@ -2,7 +2,6 @@ import { Cormorant_Garamond, Inter } from "next/font/google"
 
 import "@workspace/ui/globals.css"
 import { Providers } from "@/components/providers"
-import { Toaster } from "@workspace/ui/components/sonner"
 
 const fontSerif = Cormorant_Garamond({
   weight: ["300", "400", "500", "600", "700"],
@@ -30,7 +29,6 @@ export default function RootLayout({
         }}
       >
         <Providers>{children}</Providers>
-        <Toaster />
       </body>
     </html>
   )

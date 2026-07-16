@@ -46,26 +46,39 @@ export interface UpdateProfileDto {
 export type SubscriptionPlan = 'FREE' | 'STARTER' | 'PRO' | 'BUSINESS';
 export type SubscriptionStatus = 'ACTIVE' | 'CANCELED' | 'PAST_DUE' | 'PAUSED';
 
+// Matches the raw Prisma row returned as-is by GET /api/v1/user/subscription
+// (SubscriptionService.getSubscription) — field names are the actual DB
+// columns, not a separate API-shaped contract.
 export interface Subscription {
   id: string;
   userId: string;
   plan: SubscriptionPlan;
   status: SubscriptionStatus;
-  podcastsLimit: number;
-  minutesLimit: number;
-  currentPodcasts: number;
-  currentMinutes: number;
-  periodStart: string;
-  periodEnd: string;
+  monthlyPodcastLimit: number;
+  monthlyMinutesLimit: number;
+  currentPodcastCount: number;
+  currentMinutesUsed: number;
+  usageResetDate: string;
+  currentPeriodStart: string;
+  currentPeriodEnd: string;
   canceledAt?: string;
   createdAt: string;
   updatedAt: string;
 }
 
+// Matches GET /api/v1/user/usage (SubscriptionService.getUsage) exactly.
 export interface UsageData {
-  totalPodcasts: number;
-  totalMinutes: number;
-  thisMonthPodcasts: number;
-  thisMonthMinutes: number;
-  subscription: Subscription;
+  currentPeriod: {
+    podcastsUsed: number;
+    podcastsLimit: number;
+    minutesUsed: number;
+    minutesLimit: number;
+    resetDate: string;
+  };
+  subscription: {
+    plan: SubscriptionPlan;
+    status: SubscriptionStatus;
+    currentPeriodStart: string;
+    currentPeriodEnd: string;
+  };
 }

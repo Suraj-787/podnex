@@ -20,8 +20,8 @@ export default function DashboardPage() {
   const isLoading = statsLoading || usageLoading;
 
   // Calculate plan usage percentage
-  const planUsagePercent = usage?.subscription
-    ? Math.round((usage.subscription.currentPodcasts / usage.subscription.podcastsLimit) * 100)
+  const planUsagePercent = usage?.currentPeriod
+    ? Math.round((usage.currentPeriod.podcastsUsed / usage.currentPeriod.podcastsLimit) * 100)
     : 0;
 
   return (
@@ -50,7 +50,7 @@ export default function DashboardPage() {
         />
         <StatsCard
           title="Minutes Generated"
-          value={isLoading ? "..." : `${Math.round(stats?.totalMinutes || 0)}m`}
+          value={isLoading ? "..." : `${Math.round(stats?.totalDuration || 0)}m`}
           icon={Clock}
           description="Total audio duration"
         />
@@ -59,8 +59,8 @@ export default function DashboardPage() {
           value={isLoading ? "..." : `${planUsagePercent}%`}
           icon={Zap}
           description={
-            usage?.subscription
-              ? `${usage.subscription.currentPodcasts}/${usage.subscription.podcastsLimit} podcasts this month`
+            usage?.currentPeriod
+              ? `${usage.currentPeriod.podcastsUsed}/${usage.currentPeriod.podcastsLimit} podcasts this month`
               : "Loading..."
           }
         />

@@ -86,12 +86,15 @@ export interface ListPodcastsParams {
   sort?: 'createdAt_desc' | 'createdAt_asc' | 'duration_desc' | 'duration_asc';
 }
 
+// Matches GET /api/v1/podcasts/stats (PodcastService.getStats) exactly.
 export interface PodcastStats {
   totalPodcasts: number;
-  totalMinutes: number;
-  thisMonthPodcasts: number;
-  thisMonthMinutes: number;
   completedPodcasts: number;
-  failedPodcasts: number;
   processingPodcasts: number;
+  failedPodcasts: number;
+  queuedPodcasts: number;
+  totalDuration: number; // minutes, all-time, completed podcasts only
+  totalSize: number; // bytes
+  podcastsThisMonth: number;
+  minutesThisMonth: number;
 }

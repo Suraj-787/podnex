@@ -161,8 +161,12 @@ function BillingContent() {
 
     const fetchUsage = async () => {
         try {
+            // currentPodcastCount/currentMinutesUsed/monthlyPodcastLimit/
+            // monthlyMinutesLimit are raw Subscription columns — only present
+            // on /subscription's response, not /usage's (which nests podcast
+            // counts under currentPeriod instead).
             const response = await fetch(
-                `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/v1/user/usage`,
+                `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/v1/user/subscription`,
                 { credentials: "include" }
             );
             if (response.ok) {

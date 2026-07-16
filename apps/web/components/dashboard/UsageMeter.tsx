@@ -11,8 +11,8 @@ export function UsageMeter() {
     const isLoading = subLoading || usageLoading;
 
     const planName = subscription?.plan || "FREE";
-    const currentPodcasts = subscription?.currentPodcasts || 0;
-    const podcastsLimit = subscription?.podcastsLimit || 5;
+    const currentPodcasts = subscription?.currentPodcastCount || 0;
+    const podcastsLimit = subscription?.monthlyPodcastLimit || 5;
     const usagePercent = podcastsLimit > 0 ? (currentPodcasts / podcastsLimit) * 100 : 0;
 
     return (

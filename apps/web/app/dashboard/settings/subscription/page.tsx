@@ -86,10 +86,10 @@ export default function SubscriptionPage() {
     const isLoading = subLoading || usageLoading;
 
     const currentPlan = subscription?.plan || "FREE";
-    const podcastsUsed = subscription?.currentPodcasts || 0;
-    const podcastsLimit = subscription?.podcastsLimit || 5;
-    const minutesUsed = usage?.thisMonthMinutes || 0;
-    const minutesLimit = subscription?.minutesLimit || 25;
+    const podcastsUsed = subscription?.currentPodcastCount || 0;
+    const podcastsLimit = subscription?.monthlyPodcastLimit || 5;
+    const minutesUsed = usage?.currentPeriod?.minutesUsed || 0;
+    const minutesLimit = subscription?.monthlyMinutesLimit || 25;
 
     const podcastsPercent = (podcastsUsed / podcastsLimit) * 100;
     const minutesPercent = (minutesUsed / minutesLimit) * 100;
@@ -245,13 +245,13 @@ export default function SubscriptionPage() {
                     </div>
 
                     {/* Billing Period */}
-                    {subscription?.periodStart && subscription?.periodEnd && (
+                    {subscription?.currentPeriodStart && subscription?.currentPeriodEnd && (
                         <div className="pt-4 border-t border-border">
                             <p className="text-sm text-muted-foreground">
                                 Current billing period:{" "}
                                 <span className="text-foreground font-medium">
-                                    {new Date(subscription.periodStart).toLocaleDateString()} -{" "}
-                                    {new Date(subscription.periodEnd).toLocaleDateString()}
+                                    {new Date(subscription.currentPeriodStart).toLocaleDateString()} -{" "}
+                                    {new Date(subscription.currentPeriodEnd).toLocaleDateString()}
                                 </span>
                             </p>
                         </div>
