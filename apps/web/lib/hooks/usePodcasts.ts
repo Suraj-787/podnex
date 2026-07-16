@@ -1,5 +1,7 @@
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useEffect, useRef } from "react";
+import { useQuery, useMutation, useQueryClient, type QueryClient } from "@tanstack/react-query";
 import { podcastsApi } from "../api/podcasts.api";
+import { userKeys } from "./useUser";
 import type {
     Podcast,
     CreatePodcastDto,
@@ -19,12 +21,30 @@ export const podcastKeys = {
     status: (id: string) => [...podcastKeys.all, "status", id] as const,
 };
 
+const ACTIVE_STATUSES = new Set(["PROCESSING", "QUEUED"]);
+
+/**
+ * Podcast generation finishes asynchronously in the worker — nothing else in
+ * the app ever tells React Query that usage/subscription/stats changed once
+ * that happens (useCreatePodcast only invalidates at creation time, while
+ * still QUEUED). Called from the three hooks below that already poll a
+ * podcast's status, right when a transition into COMPLETED is observed.
+ */
+function invalidateUsageAndStats(queryClient: QueryClient) {
+    queryClient.invalidateQueries({ queryKey: podcastKeys.stats() });
+    queryClient.invalidateQueries({ queryKey: userKeys.usage() });
+    queryClient.invalidateQueries({ queryKey: userKeys.subscription() });
+}
+
 /**
  * Hook to fetch list of podcasts with pagination and filters
  * Automatically refetches if any podcast is processing
  */
 export function usePodcasts(params?: ListPodcastsParams) {
-    return useQuery({
+    const queryClient = useQueryClient();
+    const activeIds = useRef<Set<string>>(new Set());
+
+    const query = useQuery({
         queryKey: podcastKeys.list(params),
         queryFn: () => podcastsApi.list(params),
         // Auto-refresh every 3 seconds if there are processing podcasts
@@ -37,13 +57,37 @@ export function usePodcasts(params?: ListPodcastsParams) {
             return hasProcessing ? 3000 : false;
         },
     });
+
+    useEffect(() => {
+        const podcasts = query.data?.podcasts;
+        if (!podcasts) return;
+
+        const stillActive = new Set<string>();
+        let justCompleted = false;
+
+        for (const p of podcasts) {
+            if (ACTIVE_STATUSES.has(p.status)) {
+                stillActive.add(p.id);
+            } else if (p.status === "COMPLETED" && activeIds.current.has(p.id)) {
+                justCompleted = true;
+            }
+        }
+
+        activeIds.current = stillActive;
+        if (justCompleted) invalidateUsageAndStats(queryClient);
+    }, [query.data, queryClient]);
+
+    return query;
 }
 
 /**
  * Hook to fetch a single podcast
  */
 export function usePodcast(id: string) {
-    return useQuery({
+    const queryClient = useQueryClient();
+    const wasActive = useRef(false);
+
+    const query = useQuery({
         queryKey: podcastKeys.detail(id),
         queryFn: () => podcastsApi.get(id),
         enabled: !!id,
@@ -53,6 +97,20 @@ export function usePodcast(id: string) {
             return data?.status === "PROCESSING" || data?.status === "QUEUED" ? 2000 : false;
         },
     });
+
+    useEffect(() => {
+        const status = query.data?.status;
+        if (!status) return;
+
+        if (ACTIVE_STATUSES.has(status)) {
+            wasActive.current = true;
+        } else if (status === "COMPLETED" && wasActive.current) {
+            invalidateUsageAndStats(queryClient);
+            wasActive.current = false;
+        }
+    }, [query.data?.status, queryClient]);
+
+    return query;
 }
 
 /**
@@ -69,12 +127,29 @@ export function usePodcastStats() {
  * Hook to fetch podcast status (for real-time updates)
  */
 export function usePodcastStatus(id: string, enabled = true) {
-    return useQuery({
+    const queryClient = useQueryClient();
+    const wasActive = useRef(false);
+
+    const query = useQuery({
         queryKey: podcastKeys.status(id),
         queryFn: () => podcastsApi.getStatus(id),
         enabled: enabled && !!id,
         refetchInterval: 2000, // Poll every 2 seconds
     });
+
+    useEffect(() => {
+        const status = query.data?.status;
+        if (!status) return;
+
+        if (ACTIVE_STATUSES.has(status)) {
+            wasActive.current = true;
+        } else if (status === "COMPLETED" && wasActive.current) {
+            invalidateUsageAndStats(queryClient);
+            wasActive.current = false;
+        }
+    }, [query.data?.status, queryClient]);
+
+    return query;
 }
 
 /**

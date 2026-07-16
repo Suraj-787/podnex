@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -50,6 +50,7 @@ import {
   Zap,
   Volume2,
   Play,
+  Pause,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
@@ -87,6 +88,8 @@ export default function NewPodcastPage() {
   const [step, setStep] = useState(1);
   const [advancedOpen, setAdvancedOpen] = useState(false);
   const createMutation = useCreatePodcast();
+  const previewAudioRef = useRef<HTMLAudioElement | null>(null);
+  const [previewingVoice, setPreviewingVoice] = useState<string | null>(null);
 
   const form = useForm<CreatePodcastForm>({
     resolver: zodResolver(createPodcastSchema),
@@ -137,8 +140,22 @@ export default function NewPodcastPage() {
     reader.readAsText(file);
   };
 
-  const handleVoicePreview = (voiceType: string) => {
-    toast.info(`Playing ${voiceType} voice preview...`);
+  const handleVoicePreview = (voiceName: string) => {
+    const audio = previewAudioRef.current;
+    if (!audio) return;
+
+    if (previewingVoice === voiceName) {
+      audio.pause();
+      setPreviewingVoice(null);
+      return;
+    }
+
+    audio.src = `/voice-samples/${voiceName.toLowerCase()}.mp3`;
+    audio.play().catch(() => {
+      toast.error("Couldn't play voice preview");
+      setPreviewingVoice(null);
+    });
+    setPreviewingVoice(voiceName);
   };
 
   const onSubmit = async (data: CreatePodcastForm) => {
@@ -176,6 +193,11 @@ export default function NewPodcastPage() {
 
   return (
     <div className="flex flex-col h-[calc(100vh-4rem)]">
+      <audio
+        ref={previewAudioRef}
+        onEnded={() => setPreviewingVoice(null)}
+        className="hidden"
+      />
       <div className="shrink-0 border-b border-border/50 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
         <div className="px-6 lg:px-8 py-4">
           <div className="flex items-center justify-between">
@@ -473,11 +495,15 @@ Tips for best results:
                                 className="h-8 w-8 p-0"
                                 onClick={() =>
                                   handleVoicePreview(
-                                    form.watch("hostVoice") || "default"
+                                    form.watch("hostVoice") || "Sierra"
                                   )
                                 }
                               >
-                                <Play className="h-4 w-4" />
+                                {previewingVoice === (form.watch("hostVoice") || "Sierra") ? (
+                                  <Pause className="h-4 w-4" />
+                                ) : (
+                                  <Play className="h-4 w-4" />
+                                )}
                               </Button>
                             </div>
                             <FormField
@@ -524,11 +550,15 @@ Tips for best results:
                                 className="h-8 w-8 p-0"
                                 onClick={() =>
                                   handleVoicePreview(
-                                    form.watch("guestVoice") || "default"
+                                    form.watch("guestVoice") || "Daniel"
                                   )
                                 }
                               >
-                                <Play className="h-4 w-4" />
+                                {previewingVoice === (form.watch("guestVoice") || "Daniel") ? (
+                                  <Pause className="h-4 w-4" />
+                                ) : (
+                                  <Play className="h-4 w-4" />
+                                )}
                               </Button>
                             </div>
                             <FormField

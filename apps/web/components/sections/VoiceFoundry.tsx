@@ -2,7 +2,7 @@
 
 import { motion } from "framer-motion";
 import { Play, Pause } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 const voices = [
   { name: "Hannah", style: "Professional & Clear", accent: "American" },
@@ -13,9 +13,32 @@ const voices = [
 
 const VoiceFoundry = () => {
   const [playingIndex, setPlayingIndex] = useState<number | null>(null);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+
+  useEffect(() => {
+    return () => {
+      audioRef.current?.pause();
+    };
+  }, []);
+
+  const togglePlay = (index: number) => {
+    const audio = audioRef.current;
+    if (!audio) return;
+
+    if (playingIndex === index) {
+      audio.pause();
+      setPlayingIndex(null);
+      return;
+    }
+
+    audio.src = `/voice-samples/${voices[index]!.name.toLowerCase()}.mp3`;
+    audio.play().catch(() => setPlayingIndex(null));
+    setPlayingIndex(index);
+  };
 
   return (
     <section className="py-32 relative">
+      <audio ref={audioRef} onEnded={() => setPlayingIndex(null)} className="hidden" />
       <div className="container mx-auto">
         <div className="grid lg:grid-cols-2 gap-16 items-start">
           {/* Left Column - Voice Cards */}
@@ -34,7 +57,7 @@ const VoiceFoundry = () => {
                 viewport={{ once: true }}
                 transition={{ duration: 0.6, delay: index * 0.1 }}
                 className="group flex items-center gap-6 p-6 rounded-lg border border-border/30 bg-surface/30 hover:bg-surface/60 hover:border-border/50 transition-all duration-300 cursor-pointer"
-                onClick={() => setPlayingIndex(playingIndex === index ? null : index)}
+                onClick={() => togglePlay(index)}
               >
                 {/* Play Button */}
                 <div className="w-12 h-12 rounded-full border border-border/50 flex items-center justify-center group-hover:border-slate-light transition-colors">
@@ -62,7 +85,12 @@ const VoiceFoundry = () => {
                         playingIndex === index ? "animate-pulse" : ""
                       }`}
                       style={{
-                        height: `${8 + Math.random() * 20}px`,
+                        // Deterministic integer arithmetic (not
+                        // Math.random() or a transcendental function) so
+                        // server and client always produce byte-identical
+                        // markup — Math.sin() isn't guaranteed bit-identical
+                        // across JS engines and still caused a mismatch.
+                        height: `${8 + ((i * 7 + index * 5) % 20)}px`,
                         animationDelay: `${i * 0.05}s`,
                       }}
                     />
