@@ -1,8 +1,15 @@
+import type { Metadata } from "next";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import { CodeBlock } from "@/components/docs/CodeBlock";
 import { CodeTabs } from "@/components/docs/CodeTabs";
 import Link from "next/link";
+
+export const metadata: Metadata = {
+  title: "Documentation",
+  description:
+    "Authenticate, generate podcasts, and receive webhooks with the PodNex API — endpoints, voices, and code examples in cURL, JavaScript, and Python.",
+};
 
 const sections = [
   { id: "introduction", label: "Introduction" },

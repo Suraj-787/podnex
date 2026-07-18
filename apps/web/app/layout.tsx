@@ -1,7 +1,17 @@
+import type { Metadata } from "next"
 import { Cormorant_Garamond, Inter } from "next/font/google"
 
 import "@workspace/ui/globals.css"
 import { Providers } from "@/components/providers"
+
+export const metadata: Metadata = {
+  title: {
+    default: "PodNex — AI Podcast Studio",
+    template: "%s | PodNex",
+  },
+  description:
+    "Turn notes, articles, or outlines into studio-quality, two-voice podcast episodes with AI — via the dashboard or the API.",
+}
 
 const fontSerif = Cormorant_Garamond({
   weight: ["300", "400", "500", "600", "700"],

@@ -18,7 +18,7 @@ import { Input } from "@workspace/ui/components/input";
 import { Label } from "@workspace/ui/components/label";
 import { Skeleton } from "@workspace/ui/components/skeleton";
 import { Key, Copy, Trash2, Plus, CheckCircle2 } from "lucide-react";
-import { formatDistanceToNow } from "date-fns";
+import { RelativeTime } from "@/components/RelativeTime";
 import { toast } from "sonner";
 
 export default function ApiKeysPage() {
@@ -164,11 +164,11 @@ export default function ApiKeysPage() {
                                         </div>
                                         <div className="flex items-center gap-4 mt-3 text-sm text-muted-foreground">
                                             <span>
-                                                Created {formatDistanceToNow(new Date(apiKey.createdAt), { addSuffix: true })}
+                                                Created <RelativeTime date={apiKey.createdAt} />
                                             </span>
                                             {apiKey.lastUsedAt && (
                                                 <span>
-                                                    Last used {formatDistanceToNow(new Date(apiKey.lastUsedAt), { addSuffix: true })}
+                                                    Last used <RelativeTime date={apiKey.lastUsedAt} />
                                                 </span>
                                             )}
                                         </div>

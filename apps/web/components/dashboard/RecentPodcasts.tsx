@@ -6,7 +6,7 @@ import Link from "next/link"
 import { ArrowRight, FileText, Clock, CheckCircle, AlertCircle, Loader2 } from "lucide-react"
 import { usePodcasts } from "@/lib/hooks"
 import { Badge } from "@workspace/ui/components/badge"
-import { formatDistanceToNow } from "date-fns"
+import { RelativeTime } from "@/components/RelativeTime"
 
 export function RecentPodcasts() {
   const { data, isLoading } = usePodcasts({ limit: 6, sort: "createdAt_desc" });
@@ -69,7 +69,7 @@ export function RecentPodcasts() {
                   </p>
                   <div className="flex items-center gap-2 mt-1 text-sm text-muted-foreground">
                     <Clock className="h-3 w-3" />
-                    <span>{formatDistanceToNow(new Date(podcast.createdAt), { addSuffix: true })}</span>
+                    <span><RelativeTime date={podcast.createdAt} /></span>
                     {podcast.audioDuration && (
                       <>
                         <span>•</span>

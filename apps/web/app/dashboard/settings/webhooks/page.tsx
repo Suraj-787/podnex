@@ -20,7 +20,7 @@ import {
     AlertDialogTitle,
 } from "@workspace/ui/components/alert-dialog";
 import { Webhook, Plus, Trash2, Send } from "lucide-react";
-import { formatDistanceToNow } from "date-fns";
+import { RelativeTime } from "@/components/RelativeTime";
 import { toast } from "sonner";
 
 const WEBHOOK_EVENTS: { value: WebhookEvent; label: string; description: string }[] = [
@@ -180,7 +180,7 @@ export default function WebhooksPage() {
                                         </div>
                                         <div className="flex items-center gap-4 text-sm text-muted-foreground">
                                             <span>
-                                                Created {formatDistanceToNow(new Date(webhook.createdAt), { addSuffix: true })}
+                                                Created <RelativeTime date={webhook.createdAt} />
                                             </span>
                                             {webhook._count && (
                                                 <span>{webhook._count.deliveries} deliveries</span>

@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { Podcast, ViewMode } from "@/lib/types/podcast.types";
-import { formatDistanceToNow } from "date-fns";
+import { RelativeTime } from "@/components/RelativeTime";
 import { formatDuration } from "@/lib/date-utils";
 import { cn } from "@/lib/utils";
 import { Progress } from "@workspace/ui/components/progress";
@@ -203,8 +203,8 @@ export function PodcastCard({
         >
           {/* Timestamp - Aligned Vertically */}
           <div className="flex-1 min-w-0 text-xs text-muted-foreground/90 text-right">
-            <span suppressHydrationWarning className="block truncate">
-              {formatDistanceToNow(new Date(podcast.createdAt), { addSuffix: true })}
+            <span className="block truncate">
+              <RelativeTime date={podcast.createdAt} />
             </span>
           </div>
 
@@ -334,8 +334,8 @@ export function PodcastCard({
         {/* Metadata - Pushed to Bottom */}
         <div className="flex items-center gap-2 text-xs text-muted-foreground/90 mt-auto">
           <Clock className="h-3.5 w-3.5 flex-shrink-0" />
-          <span suppressHydrationWarning className="truncate">
-            {formatDistanceToNow(new Date(podcast.createdAt), { addSuffix: true })}
+          <span className="truncate">
+            <RelativeTime date={podcast.createdAt} />
           </span>
         </div>
       </div>

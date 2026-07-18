@@ -21,7 +21,7 @@ import {
   Check,
   X,
 } from "lucide-react";
-import { formatDistanceToNow } from "date-fns";
+import { RelativeTime } from "@/components/RelativeTime";
 import { PodcastPlayer } from "@/components/podcasts/PodcastPlayer";
 import { ProgressIndicator } from "@/components/podcasts/ProgressIndicator";
 import { TranscriptViewer } from "@/components/podcasts/TranscriptViewer";
@@ -201,7 +201,7 @@ export default function PodcastDetailPage() {
             <div className="flex items-center gap-4 text-sm text-muted-foreground">
               <div className="flex items-center gap-1">
                 <Calendar className="h-3 w-3" />
-                <span>{formatDistanceToNow(new Date(podcast.createdAt), { addSuffix: true })}</span>
+                <span><RelativeTime date={podcast.createdAt} /></span>
               </div>
               {podcast.audioDuration && (
                 <div className="flex items-center gap-1">
