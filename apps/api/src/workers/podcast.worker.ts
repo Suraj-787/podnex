@@ -120,11 +120,20 @@ async function processPodcastJob(job: Job<PodcastJobData>) {
 
         console.log(`✅ Podcast ${podcastId} completed`);
 
+        // Presign before notifying — audioUrl is the raw S3 object URL, which
+        // 403s given the bucket's Block Public Access (same swap the API's
+        // GET /:id and /:id/download routes already do for callers).
+        const webhookAudioUrl = await StorageService.getSignedDownloadUrl(audioUrl, 3600)
+            .catch((err) => {
+                console.error("Failed to presign audioUrl for webhook:", err);
+                return audioUrl;
+            });
+
         // Trigger webhook: podcast.completed — fire-and-forget, same reason as above
         WebhookService.sendEvent(userId, "PODCAST_COMPLETED", {
             podcastId,
             status: "COMPLETED",
-            audioUrl,
+            audioUrl: webhookAudioUrl,
             audioDuration,
             timestamp: new Date().toISOString(),
         }).catch(err => console.error("Webhook error:", err));
