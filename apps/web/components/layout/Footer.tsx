@@ -6,6 +6,7 @@ import Link from "next/link";
 const productLinks = [
   { label: "Features", href: "#features" },
   { label: "API", href: "#api" },
+  { label: "Docs", href: "/docs" },
   { label: "Pricing", href: "#pricing" },
 ];
 
