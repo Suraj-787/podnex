@@ -22,8 +22,11 @@ async function processPodcastJob(job: Job<PodcastJobData>) {
         // Update status to processing
         await updateProgress(podcastId, 0, "PROCESSING", "Starting generation");
 
-        // Trigger webhook: podcast.processing
-        await WebhookService.sendEvent(userId, "PODCAST_PROCESSING", {
+        // Trigger webhook: podcast.processing — fire-and-forget (with its own
+        // retry/backoff already inside WebhookService) so a slow or down
+        // customer endpoint can never stall this queue (concurrency: 1 means
+        // a blocked job blocks every other user's podcast behind it).
+        WebhookService.sendEvent(userId, "PODCAST_PROCESSING", {
             podcastId,
             status: "PROCESSING",
             progress: 0,
@@ -117,8 +120,8 @@ async function processPodcastJob(job: Job<PodcastJobData>) {
 
         console.log(`✅ Podcast ${podcastId} completed`);
 
-        // Trigger webhook: podcast.completed
-        await WebhookService.sendEvent(userId, "PODCAST_COMPLETED", {
+        // Trigger webhook: podcast.completed — fire-and-forget, same reason as above
+        WebhookService.sendEvent(userId, "PODCAST_COMPLETED", {
             podcastId,
             status: "COMPLETED",
             audioUrl,
@@ -149,8 +152,8 @@ async function processPodcastJob(job: Job<PodcastJobData>) {
             },
         });
 
-        // Trigger webhook: podcast.failed
-        await WebhookService.sendEvent(userId, "PODCAST_FAILED", {
+        // Trigger webhook: podcast.failed — fire-and-forget, same reason as above
+        WebhookService.sendEvent(userId, "PODCAST_FAILED", {
             podcastId,
             status: "FAILED",
             error: error.message,

@@ -3,6 +3,7 @@ import type { Prisma, PodcastStatus } from "@repo/database";
 import { AppError } from "../middleware/error.middleware.js";
 import { QueueService, type PodcastJobData } from "./queue.service.js";
 import { SubscriptionService } from "./subscription.service.js";
+import { WebhookService } from "./webhook.service.js";
 
 export class PodcastService {
     static async create(userId: string, data: {
@@ -66,6 +67,14 @@ export class PodcastService {
                 stackTrace: null,
             },
         });
+
+        // Trigger webhook: podcast.created — fire-and-forget so a slow/down
+        // customer endpoint never delays the create response.
+        WebhookService.sendEvent(userId, "PODCAST_CREATED", {
+            podcastId: podcast.id,
+            status: podcast.status,
+            timestamp: new Date().toISOString(),
+        }).catch(err => console.error("Webhook error:", err));
 
         return {
             ...podcast,
