@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { requireAuth, type AuthRequest } from "../middleware/auth.middleware.js";
+import { requireAuth, requireScope, type AuthRequest } from "../middleware/auth.middleware.js";
 import { checkSubscriptionLimits } from "../middleware/subscription.middleware.js";
 import { validate } from "../middleware/validation.middleware.js";
 import { PodcastService } from "../services/podcast.service.js";
@@ -17,6 +17,7 @@ const router = Router();
 router.post(
     "/",
     requireAuth,
+    requireScope("podcasts:write"),
     checkSubscriptionLimits,
     validate(createPodcastSchema),
     async (req: AuthRequest, res, next) => {
@@ -33,6 +34,7 @@ router.post(
 router.get(
     "/",
     requireAuth,
+    requireScope("podcasts:read"),
     validate(listPodcastsSchema, "query"),
     async (req: AuthRequest, res, next) => {
         try {
@@ -45,7 +47,7 @@ router.get(
 );
 
 // Get stats
-router.get("/stats", requireAuth, async (req: AuthRequest, res, next) => {
+router.get("/stats", requireAuth, requireScope("podcasts:read"), async (req: AuthRequest, res, next) => {
     try {
         const stats = await PodcastService.getStats(req.user!.id);
         res.json({ success: true, data: stats });
@@ -55,7 +57,7 @@ router.get("/stats", requireAuth, async (req: AuthRequest, res, next) => {
 });
 
 // Get single podcast
-router.get("/:id", requireAuth, async (req: AuthRequest, res, next) => {
+router.get("/:id", requireAuth, requireScope("podcasts:read"), async (req: AuthRequest, res, next) => {
     try {
         const podcast = await PodcastService.findById(req.params.id!, req.user!.id);
 
@@ -79,6 +81,7 @@ router.get("/:id", requireAuth, async (req: AuthRequest, res, next) => {
 router.patch(
     "/:id",
     requireAuth,
+    requireScope("podcasts:write"),
     validate(updatePodcastSchema),
     async (req: AuthRequest, res, next) => {
         try {
@@ -95,7 +98,7 @@ router.patch(
 );
 
 // Delete podcast
-router.delete("/:id", requireAuth, async (req: AuthRequest, res, next) => {
+router.delete("/:id", requireAuth, requireScope("podcasts:write"), async (req: AuthRequest, res, next) => {
     try {
         await PodcastService.delete(req.params.id!, req.user!.id);
         res.json({ success: true, message: "Podcast deleted" });
@@ -105,7 +108,7 @@ router.delete("/:id", requireAuth, async (req: AuthRequest, res, next) => {
 });
 
 // Get status
-router.get("/:id/status", requireAuth, async (req: AuthRequest, res, next) => {
+router.get("/:id/status", requireAuth, requireScope("podcasts:read"), async (req: AuthRequest, res, next) => {
     try {
         const status = await PodcastService.getStatus(req.params.id!, req.user!.id);
         res.json({ success: true, data: status });
@@ -115,7 +118,7 @@ router.get("/:id/status", requireAuth, async (req: AuthRequest, res, next) => {
 });
 
 // Retry failed podcast
-router.post("/:id/retry", requireAuth, async (req: AuthRequest, res, next) => {
+router.post("/:id/retry", requireAuth, requireScope("podcasts:write"), async (req: AuthRequest, res, next) => {
     try {
         const result = await PodcastService.retry(req.params.id!, req.user!.id);
         res.json({ success: true, data: result });
@@ -125,7 +128,7 @@ router.post("/:id/retry", requireAuth, async (req: AuthRequest, res, next) => {
 });
 
 // Download podcast
-router.get("/:id/download", requireAuth, async (req: AuthRequest, res, next) => {
+router.get("/:id/download", requireAuth, requireScope("podcasts:read"), async (req: AuthRequest, res, next) => {
     try {
         const podcast = await PodcastService.findById(req.params.id!, req.user!.id);
 

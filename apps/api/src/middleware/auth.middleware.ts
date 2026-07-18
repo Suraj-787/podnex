@@ -9,6 +9,8 @@ export interface AuthRequest extends Request {
     email: string;
     name: string;
   };
+  authMethod?: "session" | "apiKey";
+  apiKeyScopes?: string[];
 }
 
 export const requireAuth = async (
@@ -55,6 +57,8 @@ export const requireAuth = async (
             email: apiKeyRecord.user.email,
             name: apiKeyRecord.user.name,
           };
+          req.authMethod = "apiKey";
+          req.apiKeyScopes = apiKeyRecord.scopes;
 
           return next();
         }
@@ -82,6 +86,7 @@ export const requireAuth = async (
       email: session.user.email,
       name: session.user.name,
     };
+    req.authMethod = "session";
 
     next();
   } catch (error) {
@@ -114,68 +119,40 @@ export const optionalAuth = async (
   }
 };
 
-export const requireApiKey = async (
-  req: AuthRequest,
-  res: Response,
-  next: NextFunction
-) => {
-  try {
-    const apiKey = req.headers["x-api-key"] as string;
-
-    if (!apiKey) {
-      return res.status(401).json({
-        success: false,
-        error: "API key required",
-      });
-    }
-
-    // Hash the API key to compare with stored hash
-    const hashedKey = crypto.createHash("sha256").update(apiKey).digest("hex");
-
-    // Find API key in database (using 'key' field which stores the hash)
-    const apiKeyRecord = await prisma.apiKey.findFirst({
-      where: {
-        key: hashedKey,
-        // Note: isActive field doesn't exist in schema, so we check expiresAt only
-        OR: [
-          { expiresAt: null },
-          { expiresAt: { gt: new Date() } }
-        ]
-      },
-      include: {
-        user: true,
-      },
-    });
-
-    if (!apiKeyRecord) {
-      return res.status(401).json({
-        success: false,
-        error: "Invalid or expired API key",
-      });
-    }
-
-    // Update last used timestamp
-    await prisma.apiKey.update({
-      where: { id: apiKeyRecord.id },
-      data: {
-        lastUsedAt: new Date(),
-      },
-    });
-
-    // Set user from API key
-    req.user = {
-      id: apiKeyRecord.user.id,
-      email: apiKeyRecord.user.email,
-      name: apiKeyRecord.user.name,
-    };
-
-    next();
-  } catch (error) {
-    return res.status(401).json({
+/**
+ * Rejects API-key authenticated requests entirely. For account-management
+ * routes (API keys, webhooks) that must stay dashboard-only — otherwise a
+ * leaked API key of any scope could mint itself a new, more-privileged key
+ * or reconfigure webhook delivery.
+ */
+export const requireSession = (req: AuthRequest, res: Response, next: NextFunction) => {
+  if (req.authMethod === "apiKey") {
+    return res.status(403).json({
       success: false,
-      error: "API key authentication failed",
+      error: "This action requires session authentication and cannot be performed with an API key",
     });
   }
+  next();
+};
+
+/**
+ * Gate a route behind an API-key scope. Session-authenticated requests (the
+ * dashboard itself) are never scope-limited — scopes only constrain API keys
+ * issued for third-party/PaaS use, per requireAuth setting req.apiKeyScopes.
+ */
+export const requireScope = (scope: string) => {
+  return (req: AuthRequest, res: Response, next: NextFunction) => {
+    if (req.authMethod !== "apiKey") return next();
+
+    if (!req.apiKeyScopes?.includes(scope)) {
+      return res.status(403).json({
+        success: false,
+        error: `This API key does not have the required scope: ${scope}`,
+      });
+    }
+
+    next();
+  };
 };
 
 export const requireAdmin = async (

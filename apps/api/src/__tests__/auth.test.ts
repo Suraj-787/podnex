@@ -168,6 +168,7 @@ describe("Auth — Session Validation on Protected Routes", () => {
         id: "key-001",
         userId: MOCK_USER.id,
         key: "hashed-key",
+        scopes: ["podcasts:read", "podcasts:write"],
         expiresAt: null,
         lastUsedAt: null,
         user: MOCK_USER,
@@ -181,6 +182,71 @@ describe("Auth — Session Validation on Protected Routes", () => {
         .set("Authorization", "Bearer pk_live_validkey12345678");
 
       expect(res.status).toBe(200);
+    });
+
+    it("rejects a write request from a read-only scoped API key", async () => {
+      const { prisma } = await import("@repo/database");
+      vi.mocked(prisma.apiKey.findFirst).mockResolvedValue({
+        id: "key-002",
+        userId: MOCK_USER.id,
+        key: "hashed-key",
+        scopes: ["podcasts:read"],
+        expiresAt: null,
+        lastUsedAt: null,
+        user: MOCK_USER,
+      } as any);
+      vi.mocked(prisma.apiKey.update).mockResolvedValue({} as any);
+
+      const res = await request(app)
+        .post("/api/v1/podcasts")
+        .set("Authorization", "Bearer pk_live_readonlykey12345")
+        .send({ noteContent: "x".repeat(150), duration: "SHORT" });
+
+      expect(res.status).toBe(403);
+      expect(res.body).toMatchObject({ success: false });
+      expect(res.body.error).toMatch(/scope/i);
+    });
+
+    it("rejects API-key auth entirely on account-management routes (API keys)", async () => {
+      const { prisma } = await import("@repo/database");
+      vi.mocked(prisma.apiKey.findFirst).mockResolvedValue({
+        id: "key-003",
+        userId: MOCK_USER.id,
+        key: "hashed-key",
+        scopes: ["podcasts:read", "podcasts:write"],
+        expiresAt: null,
+        lastUsedAt: null,
+        user: MOCK_USER,
+      } as any);
+      vi.mocked(prisma.apiKey.update).mockResolvedValue({} as any);
+
+      const res = await request(app)
+        .get("/api/v1/api-keys")
+        .set("Authorization", "Bearer pk_live_fullaccesskey123");
+
+      expect(res.status).toBe(403);
+      expect(res.body.error).toMatch(/session authentication/i);
+    });
+
+    it("rejects API-key auth entirely on account-management routes (webhooks)", async () => {
+      const { prisma } = await import("@repo/database");
+      vi.mocked(prisma.apiKey.findFirst).mockResolvedValue({
+        id: "key-004",
+        userId: MOCK_USER.id,
+        key: "hashed-key",
+        scopes: ["podcasts:read", "podcasts:write"],
+        expiresAt: null,
+        lastUsedAt: null,
+        user: MOCK_USER,
+      } as any);
+      vi.mocked(prisma.apiKey.update).mockResolvedValue({} as any);
+
+      const res = await request(app)
+        .get("/api/v1/webhooks")
+        .set("Authorization", "Bearer pk_live_fullaccesskey456");
+
+      expect(res.status).toBe(403);
+      expect(res.body.error).toMatch(/session authentication/i);
     });
   });
 });

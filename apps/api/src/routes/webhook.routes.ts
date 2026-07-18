@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { requireAuth, type AuthRequest } from "../middleware/auth.middleware.js";
+import { requireAuth, requireSession, type AuthRequest } from "../middleware/auth.middleware.js";
 import { validate } from "../middleware/validation.middleware.js";
 import { WebhookService } from "../services/webhook.service.js";
 import {
@@ -14,6 +14,7 @@ const router = Router();
 router.post(
     "/",
     requireAuth,
+    requireSession,
     validate(createWebhookSchema),
     async (req: AuthRequest, res, next) => {
         try {
@@ -30,7 +31,7 @@ router.post(
 );
 
 // List webhooks
-router.get("/", requireAuth, async (req: AuthRequest, res, next) => {
+router.get("/", requireAuth, requireSession, async (req: AuthRequest, res, next) => {
     try {
         const webhooks = await WebhookService.list(req.user!.id);
         res.json({ success: true, data: webhooks });
@@ -40,7 +41,7 @@ router.get("/", requireAuth, async (req: AuthRequest, res, next) => {
 });
 
 // Get single webhook
-router.get("/:id", requireAuth, async (req: AuthRequest, res, next) => {
+router.get("/:id", requireAuth, requireSession, async (req: AuthRequest, res, next) => {
     try {
         const webhook = await WebhookService.findById(req.params.id!, req.user!.id);
         res.json({ success: true, data: webhook });
@@ -53,6 +54,7 @@ router.get("/:id", requireAuth, async (req: AuthRequest, res, next) => {
 router.patch(
     "/:id",
     requireAuth,
+    requireSession,
     validate(updateWebhookSchema),
     async (req: AuthRequest, res, next) => {
         try {
@@ -69,7 +71,7 @@ router.patch(
 );
 
 // Delete webhook
-router.delete("/:id", requireAuth, async (req: AuthRequest, res, next) => {
+router.delete("/:id", requireAuth, requireSession, async (req: AuthRequest, res, next) => {
     try {
         const result = await WebhookService.delete(req.params.id!, req.user!.id);
         res.json(result);
@@ -82,6 +84,7 @@ router.delete("/:id", requireAuth, async (req: AuthRequest, res, next) => {
 router.get(
     "/:id/deliveries",
     requireAuth,
+    requireSession,
     validate(getDeliveriesSchema, "query"),
     async (req: AuthRequest, res, next) => {
         try {
@@ -101,6 +104,7 @@ router.get(
 router.post(
     "/:id/deliveries/:deliveryId/retry",
     requireAuth,
+    requireSession,
     async (req: AuthRequest, res, next) => {
         try {
             const result = await WebhookService.retryDelivery(
@@ -115,7 +119,7 @@ router.post(
 );
 
 // Send test event
-router.post("/:id/test", requireAuth, async (req: AuthRequest, res, next) => {
+router.post("/:id/test", requireAuth, requireSession, async (req: AuthRequest, res, next) => {
     try {
         const result = await WebhookService.sendTestEvent(req.params.id!, req.user!.id);
         res.json(result);

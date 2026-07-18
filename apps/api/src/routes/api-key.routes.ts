@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { requireAuth, type AuthRequest } from "../middleware/auth.middleware.js";
+import { requireAuth, requireSession, type AuthRequest } from "../middleware/auth.middleware.js";
 import { validate } from "../middleware/validation.middleware.js";
 import { ApiKeyService } from "../services/api-key.service.js";
 import { createApiKeySchema, updateApiKeySchema } from "../validators/api-key.validator.js";
@@ -10,6 +10,7 @@ const router = Router();
 router.post(
     "/",
     requireAuth,
+    requireSession,
     validate(createApiKeySchema),
     async (req: AuthRequest, res, next) => {
         try {
@@ -26,7 +27,7 @@ router.post(
 );
 
 // List API keys
-router.get("/", requireAuth, async (req: AuthRequest, res, next) => {
+router.get("/", requireAuth, requireSession, async (req: AuthRequest, res, next) => {
     try {
         const apiKeys = await ApiKeyService.list(req.user!.id);
         res.json({ success: true, data: apiKeys });
@@ -36,7 +37,7 @@ router.get("/", requireAuth, async (req: AuthRequest, res, next) => {
 });
 
 // Get single API key
-router.get("/:id", requireAuth, async (req: AuthRequest, res, next) => {
+router.get("/:id", requireAuth, requireSession, async (req: AuthRequest, res, next) => {
     try {
         const apiKey = await ApiKeyService.findById(req.params.id!, req.user!.id);
         res.json({ success: true, data: apiKey });
@@ -49,6 +50,7 @@ router.get("/:id", requireAuth, async (req: AuthRequest, res, next) => {
 router.patch(
     "/:id",
     requireAuth,
+    requireSession,
     validate(updateApiKeySchema),
     async (req: AuthRequest, res, next) => {
         try {
@@ -65,7 +67,7 @@ router.patch(
 );
 
 // Revoke (delete) API key
-router.delete("/:id", requireAuth, async (req: AuthRequest, res, next) => {
+router.delete("/:id", requireAuth, requireSession, async (req: AuthRequest, res, next) => {
     try {
         const result = await ApiKeyService.revoke(req.params.id!, req.user!.id);
         res.json(result);
