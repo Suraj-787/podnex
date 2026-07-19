@@ -4,10 +4,10 @@ import { motion } from "framer-motion";
 import Link from "next/link";
 
 const productLinks = [
-  { label: "Features", href: "#features" },
-  { label: "API", href: "#api" },
+  { label: "Features", href: "/#features" },
+  { label: "API", href: "/#api" },
   { label: "Docs", href: "/docs" },
-  { label: "Pricing", href: "#pricing" },
+  { label: "Pricing", href: "/#pricing" },
 ];
 
 const Footer = () => {
@@ -17,7 +17,7 @@ const Footer = () => {
         <div className="grid grid-cols-2 md:grid-cols-3 gap-12 mb-16">
           {/* Logo & Description */}
           <div className="col-span-2">
-            <Link href="#" className="inline-block mb-4">
+            <Link href="/" className="inline-block mb-4">
               <span className="font-serif text-2xl font-semibold tracking-tight text-foreground">
                 PodNex
               </span>

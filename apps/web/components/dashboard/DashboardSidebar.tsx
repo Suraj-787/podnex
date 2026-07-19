@@ -36,7 +36,8 @@ import {
   User,
   ChevronsUpDown,
   Sparkles,
-  CreditCard
+  CreditCard,
+  BookOpen
 } from "lucide-react"
 import { UsageMeter } from "./UsageMeter"
 
@@ -61,6 +62,11 @@ const items = [
     title: "Settings",
     url: "/dashboard/settings",
     icon: Settings,
+  },
+  {
+    title: "Docs",
+    url: "/docs",
+    icon: BookOpen,
   },
 ]
 

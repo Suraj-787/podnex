@@ -19,11 +19,11 @@ const Navbar = () => {
   }, []);
 
   const navLinks = [
-    { label: "Features", href: "#features" },
-    { label: "API", href: "#api" },
+    { label: "Features", href: "/#features" },
+    { label: "API", href: "/#api" },
     { label: "Docs", href: "/docs" },
-    { label: "Pricing", href: "#pricing" },
-    { label: "FAQ", href: "#faq" },
+    { label: "Pricing", href: "/#pricing" },
+    { label: "FAQ", href: "/#faq" },
   ];
 
   return (
@@ -43,7 +43,7 @@ const Navbar = () => {
         <div className="px-6 md:px-8">
           <div className="flex items-center justify-between h-14">
             {/* Logo */}
-            <Link href="#" className="flex items-center gap-2">
+            <Link href="/" className="flex items-center gap-2">
               <span className="font-serif text-2xl font-semibold tracking-tight text-foreground">
                 PodNex
               </span>
