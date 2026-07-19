@@ -5,10 +5,12 @@ import { motion } from "framer-motion";
 import { Button } from "@workspace/ui/components/button";
 import { Menu, X } from "lucide-react";
 import Link from "next/link";
+import { useSession } from "@/lib/auth-client";
 
 const Navbar = () => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const { data: session, isPending: sessionPending } = useSession();
 
   useEffect(() => {
     const handleScroll = () => {
@@ -64,20 +66,38 @@ const Navbar = () => {
 
             {/* CTA Buttons */}
             <div className="hidden md:flex items-center gap-4">
-              <Button 
-                variant="ghost" 
-                className="text-sm font-light h-9 px-4 rounded-full"
-                asChild
-              >
-                <Link href="/signin">Sign In</Link>
-              </Button>
-              <Button 
-                variant="primary" 
-                className="text-sm h-9 px-6 rounded-full"
-                asChild
-              >
-                <Link href="/signup">Get Started</Link>
-              </Button>
+              {sessionPending ? (
+                // Session hook re-fetches on every fresh mount (e.g. landing
+                // on /docs via a full route change) — better to show nothing
+                // for a moment than confidently show the wrong CTA to an
+                // already-signed-in user.
+                <div className="h-9 w-[148px]" aria-hidden />
+              ) : session?.user ? (
+                <Button
+                  variant="primary"
+                  className="text-sm h-9 px-6 rounded-full"
+                  asChild
+                >
+                  <Link href="/dashboard">Dashboard</Link>
+                </Button>
+              ) : (
+                <>
+                  <Button
+                    variant="ghost"
+                    className="text-sm font-light h-9 px-4 rounded-full"
+                    asChild
+                  >
+                    <Link href="/signin">Sign In</Link>
+                  </Button>
+                  <Button
+                    variant="primary"
+                    className="text-sm h-9 px-6 rounded-full"
+                    asChild
+                  >
+                    <Link href="/signup">Get Started</Link>
+                  </Button>
+                </>
+              )}
             </div>
 
             {/* Mobile Menu Button */}
@@ -109,22 +129,35 @@ const Navbar = () => {
                   </a>
                 ))}
                 <div className="flex flex-col gap-3 pt-4 border-t border-border/50 mt-2">
-                  <Button 
-                    variant="ghost" 
-                    className="justify-start text-sm font-light rounded-xl"
-                    asChild
-                    onClick={() => setIsMobileMenuOpen(false)}
-                  >
-                    <Link href="/signin">Sign In</Link>
-                  </Button>
-                  <Button 
-                    variant="primary" 
-                    className="text-sm rounded-xl"
-                    asChild
-                    onClick={() => setIsMobileMenuOpen(false)}
-                  >
-                    <Link href="/signup">Get Started</Link>
-                  </Button>
+                  {sessionPending ? null : session?.user ? (
+                    <Button
+                      variant="primary"
+                      className="text-sm rounded-xl"
+                      asChild
+                      onClick={() => setIsMobileMenuOpen(false)}
+                    >
+                      <Link href="/dashboard">Dashboard</Link>
+                    </Button>
+                  ) : (
+                    <>
+                      <Button
+                        variant="ghost"
+                        className="justify-start text-sm font-light rounded-xl"
+                        asChild
+                        onClick={() => setIsMobileMenuOpen(false)}
+                      >
+                        <Link href="/signin">Sign In</Link>
+                      </Button>
+                      <Button
+                        variant="primary"
+                        className="text-sm rounded-xl"
+                        asChild
+                        onClick={() => setIsMobileMenuOpen(false)}
+                      >
+                        <Link href="/signup">Get Started</Link>
+                      </Button>
+                    </>
+                  )}
                 </div>
               </div>
             </motion.div>
