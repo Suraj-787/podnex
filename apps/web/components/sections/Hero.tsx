@@ -3,8 +3,8 @@
 import { motion } from "framer-motion";
 import { Button } from "@workspace/ui/components/button";
 import { ArrowRight, Play } from "lucide-react";
-import Image from "next/image";
 import Link from "next/link";
+import { HeroWaveform } from "./HeroWaveform";
 
 const Hero = () => {
   return (
@@ -71,26 +71,19 @@ const Hero = () => {
             className="order-1 lg:order-2 relative"
           >
             <div className="relative aspect-square max-w-lg mx-auto lg:max-w-none">
-              {/* Glow effect behind image */}
+              {/* Glow effect behind the waveform */}
               <div className="absolute inset-0 flex items-center justify-center">
-                <div className="w-[80%] h-[80%] rounded-full bg-muted/10 blur-3xl animate-pulse-slow" />
+                <div className="w-[80%] h-[80%] rounded-full bg-muted/20 blur-3xl animate-glow-pulse" />
               </div>
 
-              {/* Main image */}
+              {/* Live waveform */}
               <motion.div
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 transition={{ duration: 1.2, delay: 0.5 }}
-                className="relative z-10 w-full h-full animate-float"
+                className="relative z-10 w-full h-full"
               >
-                <Image
-                  src="/image.png"
-                  alt="Abstract soundwave orb visualization"
-                  width={600}
-                  height={600}
-                  className="w-full h-full object-contain"
-                  priority
-                />
+                <HeroWaveform />
               </motion.div>
             </div>
           </motion.div>

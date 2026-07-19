@@ -175,3 +175,38 @@
   background: linear-gradient(hsl(var(--card)), hsl(var(--card))) padding-box,
               linear-gradient(135deg, hsl(var(--border)) 0%, transparent 50%) border-box;
 }
+
+/* Hero waveform glow backdrop */
+@keyframes glow-pulse {
+  0%, 100% { opacity: 0.5; transform: scale(1); }
+  50% { opacity: 0.75; transform: scale(1.08); }
+}
+.animate-glow-pulse {
+  animation: glow-pulse 6s ease-in-out infinite;
+}
+
+/* Site-wide ambient background blobs (see AmbientBackground component) */
+@keyframes drift-a {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  50% { transform: translate(6vw, 8vh) scale(1.15); }
+}
+@keyframes drift-b {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  50% { transform: translate(-8vw, -6vh) scale(1.1); }
+}
+@keyframes drift-c {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  50% { transform: translate(-5vw, 10vh) scale(0.9); }
+}
+.animate-drift-a { animation: drift-a 22s ease-in-out infinite; }
+.animate-drift-b { animation: drift-b 26s ease-in-out infinite; }
+.animate-drift-c { animation: drift-c 30s ease-in-out infinite; }
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-glow-pulse,
+  .animate-drift-a,
+  .animate-drift-b,
+  .animate-drift-c {
+    animation: none;
+  }
+}

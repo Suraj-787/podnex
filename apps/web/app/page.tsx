@@ -1,5 +1,6 @@
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
+import { AmbientBackground } from "@/components/AmbientBackground";
 import Hero from "@/components/sections/Hero";
 import Features from "@/components/sections/Features";
 import HowItWorks from "@/components/sections/HowItWorks";
@@ -14,6 +15,7 @@ export default function Page() {
     <div className="min-h-screen bg-background relative overflow-x-hidden">
       {/* Grain overlay */}
       <div className="grain-overlay" />
+      <AmbientBackground />
 
       {/* Navigation */}
       <Navbar />
